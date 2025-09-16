@@ -1,0 +1,79 @@
+plugins {
+    id 'com.android.application'
+    id 'org.jetbrains.kotlin.android'
+}
+
+// Чтение local.properties
+def localProperties = new Properties()
+def localPropertiesFile = rootProject.file('local.properties')
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withReader('UTF-8') { reader ->
+        localProperties.load(reader)
+    }
+}
+
+android {
+    namespace 'com.company.secureapp'
+    compileSdk 34
+
+    defaultConfig {
+        applicationId "com.company.secureapp"
+        minSdk 24
+        targetSdk 34
+        versionCode 1
+        versionName "1.0"
+
+        testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // Подстановка значений из local.properties в BuildConfig
+        buildConfigField "String", "MATTERMOST_SERVER_URL", "\"${localProperties.getProperty('mattermostServerUrl', '')}\""
+        buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"${localProperties.getProperty('mattermostChannelId', '')}\""
+        buildConfigField "String", "MATTERMOST_LOGIN", "\"${localProperties.getProperty('mattermostLogin', '')}\""
+        buildConfigField "String", "MATTERMOST_TOKEN", "\"${localProperties.getProperty('mattermostToken', '')}\""
+        buildConfigField "String", "SERVER_ENDPOINT_URL", "\"${localProperties.getProperty('serverEndpointUrl', '')}\""
+        buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"${localProperties.getProperty('defaultSmsNumber', '')}\""
+    }
+
+    signingConfigs {
+        release {
+            storeFile file("${localProperties.getProperty('storeFile', 'debug.keystore')}")
+            storePassword "${localProperties.getProperty('storePassword', 'android')}"
+            keyAlias "${localProperties.getProperty('keyAlias', 'androiddebugkey')}"
+            keyPassword "${localProperties.getProperty('keyPassword', 'android')}"
+        }
+    }
+
+    buildTypes {
+        release {
+            minifyEnabled true
+            shrinkResources true
+            proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
+            signingConfig signingConfigs.release
+        }
+    }
+    compileOptions {
+        sourceCompatibility JavaVersion.VERSION_1_8
+        targetCompatibility JavaVersion.VERSION_1_8
+    }
+    kotlinOptions {
+        jvmTarget = '1.8'
+    }
+    buildFeatures {
+        viewBinding true
+        buildConfig true
+    }
+}
+
+dependencies {
+    implementation 'androidx.core:core-ktx:1.12.0'
+    implementation 'androidx.appcompat:appcompat:1.6.1'
+    implementation 'com.google.android.material:material:1.11.0'
+    implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'androidx.activity:activity-ktx:1.8.2'
+    implementation 'androidx.fragment:fragment-ktx:1.6.2'
+    testImplementation 'junit:junit:4.13.2'
+    androidTestImplementation 'androidx.test.ext:junit:1.1.5'
+    androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
