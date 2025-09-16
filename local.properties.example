@@ -1,0 +1,13 @@
+# Keystore settings
+storeFile=my-release-key.keystore
+storePassword=your_secure_password
+keyAlias=your_key_alias
+keyPassword=your_key_password
+
+# API keys and sensitive data
+mattermostServerUrl=https://your-mattermost-server.com
+mattermostChannelId=your_channel_id
+mattermostLogin=your_login
+mattermostToken=your_token
+serverEndpointUrl=https://your-server.com/alert
+defaultSmsNumber=+1234567890
