@@ -2,12 +2,12 @@ package com.company.secureapp
 
 import android.content.Context
 import android.net.ConnectivityManager
-import android.net.Uri
+import android.net.NetworkCapabilities
 import android.telephony.SmsManager
+import android.widget.Toast
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
-import okhttp3.RequestBody.Companion.asRequestBody
-import java.io.File
+import okhttp3.RequestBody.Companion.toRequestBody
 import java.io.IOException
 
 class NetworkHelper(private val context: Context) {
@@ -16,83 +16,82 @@ class NetworkHelper(private val context: Context) {
 
     fun isInternetAvailable(): Boolean {
         val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        val networkInfo = connectivityManager.activeNetworkInfo
-        return networkInfo != null && networkInfo.isConnected
+        val network = connectivityManager.activeNetwork ?: return false
+        val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
+        
+        return capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_INTERNET) &&
+               capabilities.hasCapability(NetworkCapabilities.NET_CAPABILITY_VALIDATED)
     }
 
-    fun sendToMattermost(serverUrl: String, channelId: String, login: String, token: String, message: String, audioFile: Uri?) {
-        val url = "$serverUrl/hooks/$channelId"
+    fun sendToMattermost(serverUrl: String, channelId: String, login: String, token: String, message: String) {
+        val url = "$serverUrl/api/v4/posts"
         
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("payload", """{"text":"$message","username":"$login"}""")
-            .apply {
-                audioFile?.let { uri ->
-                    val file = File(uri.path ?: return@let)
-                    addFormDataPart(
-                        "file",
-                        file.name,
-                        file.asRequestBody("audio/*".toMediaType())
-                    )
-                }
-            }
-            .build()
+        val json = """
+        {
+            "channel_id": "$channelId",
+            "message": "$message"
+        }
+        """.trimIndent()
+
+        val requestBody = json.toRequestBody("application/json".toMediaType())
 
         val request = Request.Builder()
             .url(url)
             .post(requestBody)
             .addHeader("Authorization", "Bearer $token")
+            .addHeader("Content-Type", "application/json")
             .build()
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                // Handle failure
+                // Логирование ошибки
+                android.util.Log.e("NetworkHelper", "Mattermost send failed: ${e.message}")
             }
 
             override fun onResponse(call: Call, response: Response) {
-                // Handle response
+                if (!response.isSuccessful) {
+                    android.util.Log.e("NetworkHelper", "Mattermost error: ${response.code} - ${response.body?.string()}")
+                }
             }
         })
     }
 
-    fun sendToServer(endpointUrl: String, message: String, audioFile: Uri?) {
-        val requestBody = MultipartBody.Builder()
-            .setType(MultipartBody.FORM)
-            .addFormDataPart("message", message)
-            .apply {
-                audioFile?.let { uri ->
-                    val file = File(uri.path ?: return@let)
-                    addFormDataPart(
-                        "audio",
-                        file.name,
-                        file.asRequestBody("audio/*".toMediaType())
-                    )
-                }
-            }
-            .build()
+    fun sendToServer(endpointUrl: String, message: String) {
+        val json = """
+        {
+            "message": "$message",
+            "timestamp": "${System.currentTimeMillis()}"
+        }
+        """.trimIndent()
+
+        val requestBody = json.toRequestBody("application/json".toMediaType())
 
         val request = Request.Builder()
             .url(endpointUrl)
             .post(requestBody)
+            .addHeader("Content-Type", "application/json")
             .build()
 
         client.newCall(request).enqueue(object : Callback {
             override fun onFailure(call: Call, e: IOException) {
-                // Handle failure
+                android.util.Log.e("NetworkHelper", "Server send failed: ${e.message}")
             }
 
             override fun onResponse(call: Call, response: Response) {
-                // Handle response
+                if (!response.isSuccessful) {
+                    android.util.Log.e("NetworkHelper", "Server error: ${response.code}")
+                }
             }
         })
     }
 
     fun sendSms(phoneNumber: String, message: String) {
         try {
-            val smsManager = SmsManager.getDefault()
+            val smsManager = context.getSystemService(Context.SMS_SERVICE) as SmsManager
             smsManager.sendTextMessage(phoneNumber, null, message, null, null)
         } catch (e: Exception) {
-            // Handle SMS sending failure
+            android.util.Log.e("NetworkHelper", "SMS send failed: ${e.message}")
+            Toast.makeText(context, "SMS sending failed: ${e.message}", Toast.LENGTH_LONG).show()
         }
     }
 }
