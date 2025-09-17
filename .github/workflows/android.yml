@@ -1,0 +1,48 @@
+name: Android Build
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+
+    steps:
+    - name: Checkout code
+      uses: actions/checkout@v4
+
+    - name: Set up JDK 17
+      uses: actions/setup-java@v3
+      with:
+        java-version: '17'
+        distribution: 'temurin'
+
+    - name: Setup Android SDK
+      uses: android-actions/setup-android@v3
+
+    - name: Grant execute permission for gradlew
+      run: chmod +x gradlew
+
+    - name: Build Debug APK
+      run: |
+        # Создаем минимальный local.properties для сборки
+        echo "sdk.dir=/usr/local/lib/android/sdk" > local.properties
+        echo "ndk.dir=/usr/local/lib/android/sdk/ndk/25.2.9519653" >> local.properties
+        
+        ./gradlew assembleDebug --no-daemon --console=plain
+
+    - name: Upload APK Artifact
+      uses: actions/upload-artifact@v4
+      with:
+        name: app-debug-apk
+        path: app/build/outputs/apk/debug/*.apk
+        retention-days: 7
+
+    - name: Show build results
+      run: |
+        echo "=== BUILD RESULTS ==="
+        find app/build/outputs -name "*.apk" -exec ls -la {} \;
+        echo "Build completed successfully!"
