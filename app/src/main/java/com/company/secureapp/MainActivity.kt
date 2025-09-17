@@ -18,8 +18,10 @@ class MainActivity : AppCompatActivity() {
             setContentView(R.layout.activity_main)
             Log.d(TAG, "ContentView set successfully")
 
-            val sosButton = findViewById<MaterialButton>(R.id.sos_button)
-            val settingsButton = findViewById<MaterialButton>(R.id.settings_button)
+            // ИСПРАВЬТЕ НАЗАД НА ОБЫЧНЫЕ BUTTON ▼▼▼
+            val sosButton = findViewById<Button>(R.id.sos_button)
+            val settingsButton = findViewById<Button>(R.id.settings_button)
+            // ▲▲▲ ИСПРАВЬТЕ НАЗАД
 
             sosButton.setOnClickListener {
                 Toast.makeText(this, "SOS button clicked", Toast.LENGTH_SHORT).show()
@@ -36,15 +38,5 @@ class MainActivity : AppCompatActivity() {
             Toast.makeText(this, "App error: ${e.message}", Toast.LENGTH_LONG).show()
             finish()
         }
-    }
-
-    override fun onStart() {
-        super.onStart()
-        Log.d(TAG, "onStart called")
-    }
-
-    override fun onResume() {
-        super.onResume()
-        Log.d(TAG, "onResume called")
     }
 }
