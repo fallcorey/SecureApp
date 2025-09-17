@@ -13,28 +13,16 @@ android {
         targetSdk 34
         versionCode 1
         versionName "1.0"
-
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-        // Значения по умолчанию для сборки
-        buildConfigField "String", "MATTERMOST_SERVER_URL", "\"https://your-mattermost-server.com\""
-        buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"your_channel_id\""
-        buildConfigField "String", "MATTERMOST_LOGIN", "\"your_login\""
-        buildConfigField "String", "MATTERMOST_TOKEN", "\"your_token\""
-        buildConfigField "String", "SERVER_ENDPOINT_URL", "\"https://your-server.com/alert\""
-        buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"+1234567890\""
     }
 
     buildTypes {
         release {
-            minifyEnabled true
-            shrinkResources true
+            minifyEnabled false
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.debug
         }
         debug {
             minifyEnabled false
-            debuggable true
         }
     }
 
@@ -45,6 +33,7 @@ android {
     kotlinOptions {
         jvmTarget = '1.8'
     }
+    
     buildFeatures {
         viewBinding true
         buildConfig true
@@ -56,8 +45,6 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
-    implementation 'androidx.activity:activity-ktx:1.8.2'
-    implementation 'androidx.fragment:fragment-ktx:1.6.2'
     
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
