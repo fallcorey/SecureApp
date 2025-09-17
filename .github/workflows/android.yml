@@ -24,14 +24,26 @@ jobs:
       uses: android-actions/setup-android@v3
 
     - name: Make gradlew executable
-      run: chmod +x gradlew
+      run: |
+        chmod +x gradlew
+        ls -la gradlew  # Check file permissions
+
+    - name: Set up environment
+      run: |
+        echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
+        echo "sdk.dir=$ANDROID_HOME" > local.properties
 
     - name: Build Debug APK
       run: |
-        echo "sdk.dir=$ANDROID_HOME" > local.properties
+        echo "Java version:"
+        java -version
+        echo "Gradle version:"
+        ./gradlew --version
         ./gradlew assembleDebug --no-daemon --console=plain
 
     - name: Upload APK Artifact
+      if: success()
       uses: actions/upload-artifact@v4
       with:
         name: app-debug-apk
@@ -39,6 +51,9 @@ jobs:
         retention-days: 7
 
     - name: Show build results
+      if: always()
       run: |
-        echo "=== BUILD COMPLETED ==="
-        ls -la app/build/outputs/apk/debug/
+        echo "=== BUILD RESULTS ==="
+        find app/build -name "*.apk" -exec ls -la {} \; 2>/dev/null || echo "No APK files found"
+        echo "Build directory contents:"
+        ls -la app/build/outputs/ || echo "No build outputs"
