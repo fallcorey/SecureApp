@@ -1,36 +1,25 @@
 <?xml version="1.0" encoding="utf-8"?>
 <LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
-    xmlns:app="http://schemas.android.com/apk/res-auto"
-    xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
     android:orientation="vertical"
     android:gravity="center"
-    android:padding="24dp"
-    tools:context=".MainActivity">
+    android:padding="24dp">
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/sos_button"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:layout_gravity="center"
         android:text="SOS"
         android:textSize="24sp"
-        android:textAllCaps="false"
-        app:icon="@android:drawable/ic_dialog_alert"
-        app:iconGravity="textTop"
-        app:iconPadding="8dp"
-        style="@style/Widget.MaterialComponents.Button.OutlinedButton"
-        android:backgroundTint="@android:color/holo_red_dark"
-        android:textColor="@android:color/white" />
+        android:background="#FF0000"
+        android:textColor="#FFFFFF" />
 
-    <com.google.android.material.button.MaterialButton
+    <Button
         android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:layout_gravity="center"
         android:text="Settings"
-        android:layout_marginTop="24dp"
-        app:icon="@android:drawable/ic_menu_preferences" />
+        android:layout_marginTop="24dp" />
 
 </LinearLayout>
