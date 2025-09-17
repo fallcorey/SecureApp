@@ -14,6 +14,15 @@ android {
         versionCode 1
         versionName "1.0"
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
+
+        // ДОБАВЬТЕ ЭТИ СТРОЧКИ ▼▼▼
+        buildConfigField "String", "MATTERMOST_SERVER_URL", "\"https://your-server.com\""
+        buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"your-channel-id\""
+        buildConfigField "String", "MATTERMOST_LOGIN", "\"your-login\""
+        buildConfigField "String", "MATTERMOST_TOKEN", "\"your-token\""
+        buildConfigField "String", "SERVER_ENDPOINT_URL", "\"https://api.example.com\""
+        buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"+1234567890\""
+        // ▲▲▲ ДОБАВЬТЕ ЭТИ СТРОЧКИ
     }
 
     buildTypes {
@@ -34,10 +43,12 @@ android {
         jvmTarget = '1.8'
     }
     
+    // ДОБАВЬТЕ ЭТОТ БЛОК ▼▼▼
     buildFeatures {
-        viewBinding true
         buildConfig true
+        viewBinding true
     }
+    // ▲▲▲ ДОБАВЬТЕ ЭТОТ БЛОК
 }
 
 dependencies {
@@ -45,6 +56,12 @@ dependencies {
     implementation 'androidx.appcompat:appcompat:1.6.1'
     implementation 'com.google.android.material:material:1.11.0'
     implementation 'androidx.constraintlayout:constraintlayout:2.1.4'
+    
+    // ДОБАВЬТЕ ЭТИ СТРОЧКИ ▼▼▼
+    implementation 'com.squareup.okhttp3:okhttp:4.12.0'
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    implementation 'androidx.security:security-crypto:1.1.0-alpha06'
+    // ▲▲▲ ДОБАВЬТЕ ЭТИ СТРОЧКИ
     
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
