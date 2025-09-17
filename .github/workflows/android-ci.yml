@@ -50,8 +50,22 @@ jobs:
         
         ./gradlew assembleRelease
 
-    - name: Upload APK
-      uses: actions/upload-artifact@v3
+    - name: Upload APK artifact
+      uses: actions/upload-artifact@v4
       with:
-        name: app-release
+        name: app-release-apk
         path: app/build/outputs/apk/release/app-release.apk
+        retention-days: 7
+
+    - name: Upload mapping file
+      uses: actions/upload-artifact@v4
+      with:
+        name: mapping-file
+        path: app/build/outputs/mapping/release/mapping.txt
+        retention-days: 7
+
+    - name: Show build info
+      run: |
+        echo "Build completed successfully!"
+        echo "APK location: app/build/outputs/apk/release/app-release.apk"
+        echo "APK size: $(du -h app/build/outputs/apk/release/app-release.apk | cut -f1)"
