@@ -1,38 +1,5 @@
-defaultConfig {
-    applicationId "com.company.secureapp"
-    minSdk 24
-    targetSdk 34
-    versionCode 1
-    versionName "1.0"
-
-    testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
-
-    // Значения по умолчанию для CI/CD
-    buildConfigField "String", "MATTERMOST_SERVER_URL", "\"\""
-    buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"\""
-    buildConfigField "String", "MATTERMOST_LOGIN", "\"\""
-    buildConfigField "String", "MATTERMOST_TOKEN", "\"\""
-    buildConfigField "String", "SERVER_ENDPOINT_URL", "\"\""
-    buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"\""
-}
-
-// Загрузка значений из environment variables для CI/CD
-task loadEnv {
-    doFirst {
-        def env = System.getenv()
-        android.defaultConfig.buildConfigFields.clear()
-        
-        android.defaultConfig.buildConfigField "String", "MATTERMOST_SERVER_URL", "\"${env.get('MATTERMOST_SERVER_URL', '')}\""
-        android.defaultConfig.buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"${env.get('MATTERMOST_CHANNEL_ID', '')}\""
-        android.defaultConfig.buildConfigField "String", "MATTERMOST_LOGIN", "\"${env.get('MATTERMOST_LOGIN', '')}\""
-        android.defaultConfig.buildConfigField "String", "MATTERMOST_TOKEN", "\"${env.get('MATTERMOST_TOKEN', '')}\""
-        android.defaultConfig.buildConfigField "String", "SERVER_ENDPOINT_URL", "\"${env.get('SERVER_ENDPOINT_URL', '')}\""
-        android.defaultConfig.buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"${env.get('DEFAULT_SMS_NUMBER', '')}\""
-    }
-}
-
-tasks.whenTaskAdded { task ->
-    if (task.name == 'generateReleaseBuildConfig') {
-        task.dependsOn loadEnv
-    }
+// Top-level build file where you can add configuration options common to all sub-projects/modules.
+plugins {
+    id 'com.android.application' version '8.2.2' apply false
+    id 'org.jetbrains.kotlin.android' version '1.9.22' apply false
 }
