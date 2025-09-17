@@ -30,7 +30,6 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            // Временное отключение подписи для CI
             signingConfig signingConfigs.debug
         }
         debug {
@@ -60,22 +59,7 @@ dependencies {
     implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
     
-    // Google Play Services for Location
-        
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
-}
-
-// Простая задача для вывода информации о сборке
-task printBuildInfo {
-    doLast {
-        println "=== BUILD INFORMATION ==="
-        println "Application ID: ${android.defaultConfig.applicationId}"
-        println "Version: ${android.defaultConfig.versionName} (${android.defaultConfig.versionCode})"
-        println "Min SDK: ${android.defaultConfig.minSdkVersion}"
-        println "Target SDK: ${android.defaultConfig.targetSdkVersion}"
-        println "Build types: ${android.buildTypes.collect { it.name }}"
-        println "========================="
-    }
 }
