@@ -3,15 +3,6 @@ plugins {
     id 'org.jetbrains.kotlin.android'
 }
 
-// Чтение local.properties
-def localProperties = new Properties()
-def localPropertiesFile = rootProject.file('local.properties')
-if (localPropertiesFile.exists()) {
-    localPropertiesFile.withReader('UTF-8') { reader ->
-        localProperties.load(reader)
-    }
-}
-
 android {
     namespace 'com.company.secureapp'
     compileSdk 34
@@ -25,22 +16,13 @@ android {
 
         testInstrumentationRunner "androidx.test.runner.AndroidJUnitRunner"
 
-        // Подстановка значений из local.properties в BuildConfig
-        buildConfigField "String", "MATTERMOST_SERVER_URL", "\"${localProperties.getProperty('mattermostServerUrl', '')}\""
-        buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"${localProperties.getProperty('mattermostChannelId', '')}\""
-        buildConfigField "String", "MATTERMOST_LOGIN", "\"${localProperties.getProperty('mattermostLogin', '')}\""
-        buildConfigField "String", "MATTERMOST_TOKEN", "\"${localProperties.getProperty('mattermostToken', '')}\""
-        buildConfigField "String", "SERVER_ENDPOINT_URL", "\"${localProperties.getProperty('serverEndpointUrl', '')}\""
-        buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"${localProperties.getProperty('defaultSmsNumber', '')}\""
-    }
-
-    signingConfigs {
-        release {
-            storeFile file("${localProperties.getProperty('storeFile', 'debug.keystore')}")
-            storePassword "${localProperties.getProperty('storePassword', 'android')}"
-            keyAlias "${localProperties.getProperty('keyAlias', 'androiddebugkey')}"
-            keyPassword "${localProperties.getProperty('keyPassword', 'android')}"
-        }
+        // Значения по умолчанию для сборки
+        buildConfigField "String", "MATTERMOST_SERVER_URL", "\"https://your-mattermost-server.com\""
+        buildConfigField "String", "MATTERMOST_CHANNEL_ID", "\"your_channel_id\""
+        buildConfigField "String", "MATTERMOST_LOGIN", "\"your_login\""
+        buildConfigField "String", "MATTERMOST_TOKEN", "\"your_token\""
+        buildConfigField "String", "SERVER_ENDPOINT_URL", "\"https://your-server.com/alert\""
+        buildConfigField "String", "DEFAULT_SMS_NUMBER", "\"+1234567890\""
     }
 
     buildTypes {
@@ -48,9 +30,15 @@ android {
             minifyEnabled true
             shrinkResources true
             proguardFiles getDefaultProguardFile('proguard-android-optimize.txt'), 'proguard-rules.pro'
-            signingConfig signingConfigs.release
+            // Временное отключение подписи для CI
+            signingConfig signingConfigs.debug
+        }
+        debug {
+            minifyEnabled false
+            debuggable true
         }
     }
+
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_1_8
         targetCompatibility JavaVersion.VERSION_1_8
@@ -73,7 +61,24 @@ dependencies {
     implementation 'com.squareup.okhttp3:okhttp:4.12.0'
     implementation 'androidx.activity:activity-ktx:1.8.2'
     implementation 'androidx.fragment:fragment-ktx:1.6.2'
+    
+    // Google Play Services for Location
+    implementation 'com.google.android.gms:play-services-location:21.0.1'
+    
     testImplementation 'junit:junit:4.13.2'
     androidTestImplementation 'androidx.test.ext:junit:1.1.5'
     androidTestImplementation 'androidx.test.espresso:espresso-core:3.5.1'
+}
+
+// Простая задача для вывода информации о сборке
+task printBuildInfo {
+    doLast {
+        println "=== BUILD INFORMATION ==="
+        println "Application ID: ${android.defaultConfig.applicationId}"
+        println "Version: ${android.defaultConfig.versionName} (${android.defaultConfig.versionCode})"
+        println "Min SDK: ${android.defaultConfig.minSdkVersion}"
+        println "Target SDK: ${android.defaultConfig.targetSdkVersion}"
+        println "Build types: ${android.buildTypes.collect { it.name }}"
+        println "========================="
+    }
 }
