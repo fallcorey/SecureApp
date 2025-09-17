@@ -35,4 +35,8 @@ class PreferenceHelper(context: Context) {
     fun getBoolean(key: String, defaultValue: Boolean = false): Boolean {
         return sharedPreferences.getBoolean(key, defaultValue)
     }
+
+    fun clearAll() {
+        sharedPreferences.edit().clear().apply()
+    }
 }
