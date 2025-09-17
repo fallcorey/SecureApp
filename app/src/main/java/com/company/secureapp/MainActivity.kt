@@ -1,5 +1,6 @@
 package com.company.secureapp
 
+import android.content.Intent
 import android.os.Bundle
 import android.util.Log
 import android.widget.Button
@@ -18,17 +19,19 @@ class MainActivity : AppCompatActivity() {
             setContentView(R.layout.activity_main)
             Log.d(TAG, "ContentView set successfully")
 
-            // ИСПРАВЬТЕ НАЗАД НА ОБЫЧНЫЕ BUTTON ▼▼▼
             val sosButton = findViewById<Button>(R.id.sos_button)
             val settingsButton = findViewById<Button>(R.id.settings_button)
-            // ▲▲▲ ИСПРАВЬТЕ НАЗАД
 
             sosButton.setOnClickListener {
                 Toast.makeText(this, "SOS button clicked", Toast.LENGTH_SHORT).show()
+                // Временное сообщение - потом добавим функционал
             }
 
             settingsButton.setOnClickListener {
-                Toast.makeText(this, "Settings button clicked", Toast.LENGTH_SHORT).show()
+                Toast.makeText(this, "Opening Settings...", Toast.LENGTH_SHORT).show()
+                // Открываем SettingsActivity
+                val intent = Intent(this, SettingsActivity::class.java)
+                startActivity(intent)
             }
 
             Log.d(TAG, "onCreate completed successfully")
@@ -36,7 +39,6 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Log.e(TAG, "Error in onCreate: ${e.message}", e)
             Toast.makeText(this, "App error: ${e.message}", Toast.LENGTH_LONG).show()
-            finish()
         }
     }
 }
