@@ -18,8 +18,8 @@ class MainActivity : AppCompatActivity() {
             setContentView(R.layout.activity_main)
             Log.d(TAG, "ContentView set successfully")
 
-            val sosButton = findViewById<Button>(R.id.sos_button)
-            val settingsButton = findViewById<Button>(R.id.settings_button)
+            val sosButton = findViewById<MaterialButton>(R.id.sos_button)
+            val settingsButton = findViewById<MaterialButton>(R.id.settings_button)
 
             sosButton.setOnClickListener {
                 Toast.makeText(this, "SOS button clicked", Toast.LENGTH_SHORT).show()
