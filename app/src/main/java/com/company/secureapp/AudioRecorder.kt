@@ -2,22 +2,20 @@ package com.company.secureapp
 
 import android.content.Context
 import android.media.MediaRecorder
-import android.net.Uri
 import android.os.Environment
-import androidx.core.content.FileProvider
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.Date
-import java.util.Locale
+import java.util.*
 
 class AudioRecorder(private val context: Context) {
 
     private var mediaRecorder: MediaRecorder? = null
     private var currentFile: File? = null
+    private var isRecording = false
 
-    fun startRecording(): Uri? {
-        if (mediaRecorder != null) {
+    fun startRecording(): Boolean {
+        if (isRecording) {
             stopRecording()
         }
 
@@ -26,35 +24,48 @@ class AudioRecorder(private val context: Context) {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioSamplingRate(44100)
+                setAudioChannels(1)
                 
                 currentFile = createAudioFile()
-                currentFile?.let {
-                    setOutputFile(it.absolutePath)
-                }
+                setOutputFile(currentFile?.absolutePath)
                 
                 prepare()
                 start()
             }
-            return currentFile?.let { getUriForFile(it) }
+            isRecording = true
+            return true
         } catch (e: IOException) {
             stopRecording()
-            return null
+            return false
         } catch (e: IllegalStateException) {
             stopRecording()
-            return null
+            return false
         }
     }
 
     fun stopRecording() {
         mediaRecorder?.apply {
             try {
-                stop()
+                if (isRecording) {
+                    stop()
+                }
             } catch (e: IllegalStateException) {
                 // Ignore if already stopped
+            } finally {
+                release()
             }
-            release()
         }
         mediaRecorder = null
+        isRecording = false
+    }
+
+    fun getRecordedFile(): File? {
+        return if (!isRecording) currentFile else null
+    }
+
+    fun isRecording(): Boolean {
+        return isRecording
     }
 
     private fun createAudioFile(): File {
@@ -67,11 +78,9 @@ class AudioRecorder(private val context: Context) {
         )
     }
 
-    private fun getUriForFile(file: File): Uri {
-        return FileProvider.getUriForFile(
-            context,
-            "${context.packageName}.provider",
-            file
-        )
+    fun cleanup() {
+        stopRecording()
+        currentFile?.delete()
+        currentFile = null
     }
 }
