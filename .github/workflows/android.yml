@@ -23,24 +23,21 @@ jobs:
     - name: Setup Android SDK
       uses: android-actions/setup-android@v3
 
-    - name: Make gradlew executable
+    - name: Install Gradle
       run: |
-        chmod +x gradlew
-        ls -la gradlew  # Check file permissions
+        sudo apt-get update
+        sudo apt-get install -y gradle
+        gradle --version
 
     - name: Set up environment
       run: |
-        echo "JAVA_HOME=$JAVA_HOME" >> $GITHUB_ENV
-        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
         echo "sdk.dir=$ANDROID_HOME" > local.properties
+        echo "ANDROID_HOME=$ANDROID_HOME" >> $GITHUB_ENV
 
-    - name: Build Debug APK
+    - name: Build with Gradle
       run: |
-        echo "Java version:"
-        java -version
-        echo "Gradle version:"
-        ./gradlew --version
-        ./gradlew assembleDebug --no-daemon --console=plain
+        gradle wrapper --version
+        gradle assembleDebug --no-daemon --console=plain
 
     - name: Upload APK Artifact
       if: success()
@@ -55,5 +52,3 @@ jobs:
       run: |
         echo "=== BUILD RESULTS ==="
         find app/build -name "*.apk" -exec ls -la {} \; 2>/dev/null || echo "No APK files found"
-        echo "Build directory contents:"
-        ls -la app/build/outputs/ || echo "No build outputs"
