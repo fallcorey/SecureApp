@@ -17,7 +17,6 @@ class MainActivity : AppCompatActivity() {
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var audioRecorder: AudioRecorderHelper
     private val SMS_PERMISSION_CODE = 1001
-    private val AUDIO_PERMISSION_CODE = 1002
     private val handler = Handler(Looper.getMainLooper())
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -125,14 +124,11 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Остановка записи
+    // Остановка записи - УПРОЩЕННАЯ ВЕРСИЯ
     private fun stopRecording() {
         audioRecorder.stopRecording()
-        val filePath = audioRecorder.getRecordedFilePath()
-        Toast.makeText(this, 
-            "⏹️ Recording stopped\n" +
-            "💾 File: $filePath", 
-            Toast.LENGTH_LONG).show()
+        // ВРЕМЕННО УБИРАЕМ ВЫЗОВ getRecordedFilePath()
+        Toast.makeText(this, "⏹️ Recording stopped", Toast.LENGTH_LONG).show()
     }
 
     // Обработка результата запроса разрешений
