@@ -32,6 +32,13 @@ class SettingsActivity : AppCompatActivity() {
 
         saveButton.setOnClickListener {
             // Сохраняем настройки
+            saveButton.setOnClickListener {
+            val smsNumberText = smsNumber.text.toString()
+    
+            if (smsNumberText.isNotBlank() && !smsNumberText.startsWith("+")) {
+                Toast.makeText(this, "❌ Phone number must start with +", Toast.LENGTH_LONG).show()
+                return@setOnClickListener
+            }
             preferenceHelper.saveString("sms_number", smsNumber.text.toString())
             preferenceHelper.saveString("server_url", serverUrl.text.toString())
             preferenceHelper.saveString("user_name", userName.text.toString())
