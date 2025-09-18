@@ -18,17 +18,20 @@ class SettingsActivity : AppCompatActivity() {
 
         val saveButton = findViewById<Button>(R.id.save_button)
         val smsNumber = findViewById<EditText>(R.id.sms_number)
+        val serverUrl = findViewById<EditText>(R.id.server_url)
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
 
         // Загружаем сохраненные настройки
         smsNumber.setText(preferenceHelper.getString("sms_number", ""))
+        serverUrl.setText(preferenceHelper.getString("server_url", ""))
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
 
         saveButton.setOnClickListener {
             // Сохраняем настройки
             preferenceHelper.saveString("sms_number", smsNumber.text.toString())
+            preferenceHelper.saveString("server_url", serverUrl.text.toString())
             preferenceHelper.saveString("user_name", userName.text.toString())
             preferenceHelper.saveString("user_phone", userPhone.text.toString())
             
