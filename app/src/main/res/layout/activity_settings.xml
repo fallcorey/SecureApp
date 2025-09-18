@@ -12,7 +12,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="SMS Settings"
+            android:text="Emergency Settings"
             android:textSize="18sp"
             android:textStyle="bold"
             android:layout_marginBottom="8dp" />
@@ -26,11 +26,19 @@
             android:layout_marginTop="8dp" />
 
         <EditText
+            android:id="@+id/server_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Server URL (optional)"
+            android:inputType="textUri"
+            android:layout_marginTop="8dp" />
+
+        <EditText
             android:id="@+id/user_full_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Your Full Name"
-            android:layout_marginTop="16dp" />
+            android:layout_marginTop="8dp" />
 
         <EditText
             android:id="@+id/user_phone_number"
