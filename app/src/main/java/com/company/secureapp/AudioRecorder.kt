@@ -24,19 +24,24 @@ class AudioRecorderHelper(private val context: Context) {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
+                setAudioSamplingRate(44100)
+                setAudioChannels(1)
                 setOutputFile(createAudioFile()?.absolutePath)
                 prepare()
                 start()
             }
 
-            Log.d(TAG, "Recording started")
+            Log.d(TAG, "Recording started successfully")
             return true
 
         } catch (e: IOException) {
-            Log.e(TAG, "Recording failed: ${e.message}")
+            Log.e(TAG, "Recording failed - IO: ${e.message}")
             return false
         } catch (e: IllegalStateException) {
-            Log.e(TAG, "Recording failed: ${e.message}")
+            Log.e(TAG, "Recording failed - State: ${e.message}")
+            return false
+        } catch (e: Exception) {
+            Log.e(TAG, "Recording failed - General: ${e.message}")
             return false
         }
     }
@@ -45,14 +50,19 @@ class AudioRecorderHelper(private val context: Context) {
     fun stopRecording() {
         mediaRecorder?.apply {
             try {
-                stop()
+                if (isRecording()) {
+                    stop()
+                    Log.d(TAG, "Recording stopped successfully")
+                }
             } catch (e: IllegalStateException) {
-                Log.e(TAG, "Stop failed: ${e.message}")
+                Log.e(TAG, "Stop failed - already stopped: ${e.message}")
+            } catch (e: Exception) {
+                Log.e(TAG, "Stop failed - General: ${e.message}")
+            } finally {
+                release()
             }
-            release()
         }
         mediaRecorder = null
-        Log.d(TAG, "Recording stopped")
     }
 
     // Создать файл для записи
@@ -60,11 +70,20 @@ class AudioRecorderHelper(private val context: Context) {
         return try {
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC)
-            File.createTempFile("EMERGENCY_${timeStamp}_", ".mp3", storageDir).also {
-                currentFile = it
+            
+            if (storageDir != null && !storageDir.exists()) {
+                storageDir.mkdirs()
+            }
+            
+            File.createTempFile("EMERGENCY_${timeStamp}_", ".mp3", storageDir).apply {
+                currentFile = this
+                Log.d(TAG, "Audio file created: $absolutePath")
             }
         } catch (e: IOException) {
             Log.e(TAG, "File creation failed: ${e.message}")
+            null
+        } catch (e: Exception) {
+            Log.e(TAG, "File creation failed - General: ${e.message}")
             null
         }
     }
@@ -73,5 +92,18 @@ class AudioRecorderHelper(private val context: Context) {
     fun getRecordedFile(): File? = currentFile
 
     // Проверить идет ли запись
-    fun isRecording(): Boolean = mediaRecorder != null
+    fun isRecording(): Boolean {
+        return try {
+            mediaRecorder != null
+        } catch (e: Exception) {
+            false
+        }
+    }
+
+    // Очистка ресурсов
+    fun cleanup() {
+        stopRecording()
+        currentFile?.delete()
+        currentFile = null
+    }
 }
