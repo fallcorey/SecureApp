@@ -11,14 +11,11 @@ class SimplePreferenceHelper(context: Context) {
     // Сохранение строки
     fun saveString(key: String, value: String) {
         sharedPreferences.edit().putString(key, value).apply()
-        println("Saved: $key = $value") // Для отладки
     }
 
     // Получение строки
     fun getString(key: String, defaultValue: String = ""): String {
-        val value = sharedPreferences.getString(key, defaultValue) ?: defaultValue
-        println("Loaded: $key = $value") // Для отладки
-        return value
+        return sharedPreferences.getString(key, defaultValue) ?: defaultValue
     }
 
     // Сохранение boolean
