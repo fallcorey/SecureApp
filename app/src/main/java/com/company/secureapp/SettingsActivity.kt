@@ -18,19 +18,16 @@ class SettingsActivity : AppCompatActivity() {
 
         val saveButton = findViewById<Button>(R.id.save_button)
         val smsNumber = findViewById<EditText>(R.id.sms_number)
-        val serverUrl = findViewById<EditText>(R.id.server_endpoint_url)
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
 
         // Загружаем сохраненные настройки
         smsNumber.setText(preferenceHelper.getString("sms_number", ""))
-        serverUrl.setText(preferenceHelper.getString("server_url", ""))
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
 
         saveButton.setOnClickListener {
             val smsNumberText = smsNumber.text.toString().trim()
-            val serverUrlText = serverUrl.text.toString().trim()
             val userNameText = userName.text.toString().trim()
             val userPhoneText = userPhone.text.toString().trim()
 
@@ -61,7 +58,6 @@ class SettingsActivity : AppCompatActivity() {
             try {
                 // Сохраняем настройки
                 preferenceHelper.saveString("sms_number", smsNumberText)
-                preferenceHelper.saveString("server_url", serverUrlText)
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
