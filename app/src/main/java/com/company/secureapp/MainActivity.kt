@@ -16,6 +16,7 @@ class MainActivity : AppCompatActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var audioRecorder: AudioRecorderHelper
+    private lateinit var locationHelper: LocationHelper
     private val SMS_PERMISSION_CODE = 1001
     private val handler = Handler(Looper.getMainLooper())
 
@@ -25,6 +26,7 @@ class MainActivity : AppCompatActivity() {
 
         preferenceHelper = SimplePreferenceHelper(this)
         audioRecorder = AudioRecorderHelper(this)
+        locationHelper = LocationHelper(this)
 
         val sosButton = findViewById<Button>(R.id.sos_button)
         val settingsButton = findViewById<Button>(R.id.settings_button)
@@ -45,43 +47,35 @@ class MainActivity : AppCompatActivity() {
 
     // Проверка всех разрешений
     private fun checkAllPermissions(): Boolean {
-        return checkSmsPermission() && checkAudioPermission()
+        return checkSmsPermission() && checkAudioPermission() && checkLocationPermission()
     }
 
-    // Проверка разрешения на отправку SMS
     private fun checkSmsPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.SEND_SMS
-        ) == PackageManager.PERMISSION_GRANTED
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
     }
 
-    // Проверка разрешения на запись audio
     private fun checkAudioPermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(
-            this,
-            Manifest.permission.RECORD_AUDIO
-        ) == PackageManager.PERMISSION_GRANTED
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+               ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
     // Запрос всех разрешений
     private fun requestAllPermissions() {
         val permissionsToRequest = mutableListOf<String>()
         
-        if (!checkSmsPermission()) {
-            permissionsToRequest.add(Manifest.permission.SEND_SMS)
-        }
-        
-        if (!checkAudioPermission()) {
-            permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        if (!checkSmsPermission()) permissionsToRequest.add(Manifest.permission.SEND_SMS)
+        if (!checkAudioPermission()) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        if (!checkLocationPermission()) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
         
         if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(
-                this,
-                permissionsToRequest.toTypedArray(),
-                SMS_PERMISSION_CODE
-            )
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), SMS_PERMISSION_CODE)
         }
     }
 
@@ -96,27 +90,30 @@ class MainActivity : AppCompatActivity() {
                 return
             }
 
+            // Получаем локацию
+            val locationInfo = locationHelper.getLocationString()
+
             // Начинаем запись звука
+            var isRecording = false
             if (audioRecorder.startRecording()) {
+                isRecording = true
                 Toast.makeText(this, "🎤 Audio recording started", Toast.LENGTH_SHORT).show()
-                
-                // Останавливаем запись через 30 секунд
-                handler.postDelayed({
-                    stopRecording()
-                }, 30000) // 30 секунд
+                handler.postDelayed({ stopRecording() }, 30000)
             }
 
-            // Отправляем SMS
-            val message = "🚨 EMERGENCY ALERT from $savedUserName! " +
-                         "Need immediate assistance! " +
-                         "Audio recording is in progress."
-            
+            // Отправляем SMS с локацией
+            val message = "🚨 EMERGENCY from $savedUserName!\n" +
+                         "Need immediate assistance!\n" +
+                         "$locationInfo\n" +
+                         if (isRecording) "Audio recording active" else ""
+
             val smsManager = SmsManager.getDefault()
             smsManager.sendTextMessage(savedSmsNumber, null, message, null, null)
             
             Toast.makeText(this, 
                 "✅ SMS sent to: $savedSmsNumber\n" +
-                "🎤 Recording audio for 30 seconds...", 
+                "📍 Location included\n" +
+                if (isRecording) "🎤 Recording audio..." else "", 
                 Toast.LENGTH_LONG).show()
             
         } catch (e: Exception) {
@@ -124,34 +121,24 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Остановка записи - УПРОЩЕННАЯ ВЕРСИЯ
     private fun stopRecording() {
         audioRecorder.stopRecording()
-        // ВРЕМЕННО УБИРАЕМ ВЫЗОВ getRecordedFilePath()
         Toast.makeText(this, "⏹️ Recording stopped", Toast.LENGTH_LONG).show()
     }
 
-    // Обработка результата запроса разрешений
-    override fun onRequestPermissionsResult(
-        requestCode: Int,
-        permissions: Array<out String>,
-        grantResults: IntArray
-    ) {
+    // Обработка разрешений
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
         if (requestCode == SMS_PERMISSION_CODE) {
             var allGranted = true
-            
             for (i in grantResults.indices) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
                     Toast.makeText(this, "Permission denied: ${permissions[i]}", Toast.LENGTH_LONG).show()
                 }
             }
-            
-            if (allGranted) {
-                startEmergencyProcedure()
-            }
+            if (allGranted) startEmergencyProcedure()
         }
     }
 
