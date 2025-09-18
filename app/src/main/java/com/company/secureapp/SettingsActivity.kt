@@ -21,6 +21,8 @@ class SettingsActivity : AppCompatActivity() {
         val serverUrl = findViewById<EditText>(R.id.server_url)
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
+        val googleMapsUrl = findViewById<EditText>(R.id.google_maps_url)
+                googleMapsUrl.setText(preferenceHelper.getString("google_maps_url", ""))
 
         // Загружаем сохраненные настройки
         smsNumber.setText(preferenceHelper.getString("sms_number", ""))
@@ -34,6 +36,7 @@ class SettingsActivity : AppCompatActivity() {
             preferenceHelper.saveString("server_url", serverUrl.text.toString())
             preferenceHelper.saveString("user_name", userName.text.toString())
             preferenceHelper.saveString("user_phone", userPhone.text.toString())
+            preferenceHelper.saveString("google_maps_url", googleMapsUrl.text.toString())
             
             Toast.makeText(this, "✅ Settings saved!", Toast.LENGTH_LONG).show()
             finish()
