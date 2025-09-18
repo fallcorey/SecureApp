@@ -1,59 +1,15 @@
 <?xml version="1.0" encoding="utf-8"?>
-<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:orientation="vertical"
+    android:padding="24dp"
+    android:gravity="center">
 
-    <LinearLayout
-        android:layout_width="match_parent"
+    <Button
+        android:id="@+id/save_button"
+        android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:orientation="vertical"
-        android:padding="16dp">
+        android:text="Save Settings" />
 
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="General Settings"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
-
-        <EditText
-            android:id="@+id/sms_number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="SMS Number (формат: +79123456789)"
-            android:inputType="phone"
-            android:layout_marginTop="8dp" />
-
-        <EditText
-            android:id="@+id/server_endpoint_url"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Server Endpoint URL"
-            android:inputType="textUri"
-            android:layout_marginTop="8dp" />
-
-        <EditText
-            android:id="@+id/user_full_name"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="User Full Name"
-            android:layout_marginTop="8dp" />
-
-        <EditText
-            android:id="@+id/user_phone_number"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="User Phone Number"
-            android:inputType="phone"
-            android:layout_marginTop="8dp" />
-
-        <Button
-            android:id="@+id/save_button"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Save Settings"
-            android:layout_marginTop="24dp" />
-
-    </LinearLayout>
-</ScrollView>
+</LinearLayout>
