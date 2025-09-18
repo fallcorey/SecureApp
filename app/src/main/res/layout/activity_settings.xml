@@ -21,7 +21,7 @@
             android:id="@+id/sms_number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="SMS Number"
+            android:hint="SMS Number (формат: +79123456789)"
             android:inputType="phone"
             android:layout_marginTop="8dp" />
 
