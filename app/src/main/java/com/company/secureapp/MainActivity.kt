@@ -4,7 +4,6 @@ import android.content.Intent
 import android.os.Bundle
 import android.os.Handler
 import android.os.Looper
-import android.telephony.SmsManager
 import android.widget.Button
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -17,6 +16,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var audioRecorder: AudioRecorderHelper
     private lateinit var locationHelper: LocationHelper
+    private lateinit var networkHelper: NetworkHelper
     private val SMS_PERMISSION_CODE = 1001
     private val handler = Handler(Looper.getMainLooper())
 
@@ -27,6 +27,7 @@ class MainActivity : AppCompatActivity() {
         preferenceHelper = SimplePreferenceHelper(this)
         audioRecorder = AudioRecorderHelper(this)
         locationHelper = LocationHelper(this)
+        networkHelper = NetworkHelper(this)
 
         val sosButton = findViewById<Button>(R.id.sos_button)
         val settingsButton = findViewById<Button>(R.id.settings_button)
@@ -86,44 +87,70 @@ class MainActivity : AppCompatActivity() {
             val savedUserName = preferenceHelper.getString("user_name", "User")
             
             if (savedSmsNumber.isBlank()) {
-                Toast.makeText(this, "❌ Please set SMS number in settings", Toast.LENGTH_LONG).show()
+                showError("❌ Please set SMS number in settings")
+                return
+            }
+
+            // Проверяем номер телефона
+            if (!isValidPhoneNumber(savedSmsNumber)) {
+                showError("❌ Invalid phone number format. Use: +79123456789")
                 return
             }
 
             // Получаем локацию
             val locationInfo = locationHelper.getLocationString()
+            val networkInfo = networkHelper.getNetworkInfo()
 
             // Начинаем запись звука
             var isRecording = false
             if (audioRecorder.startRecording()) {
                 isRecording = true
-                Toast.makeText(this, "🎤 Audio recording started", Toast.LENGTH_SHORT).show()
-                handler.postDelayed({ stopRecording() }, 30000)
+                showToast("🎤 Audio recording started")
+                handler.postDelayed({ stopRecordingAndNotify() }, 30000)
             }
 
-            // Отправляем SMS с локацией
+            // Формируем сообщение
             val message = "🚨 EMERGENCY from $savedUserName!\n" +
                          "Need immediate assistance!\n" +
                          "$locationInfo\n" +
+                         "Network: $networkInfo\n" +
                          if (isRecording) "Audio recording active" else ""
 
-            val smsManager = SmsManager.getDefault()
-            smsManager.sendTextMessage(savedSmsNumber, null, message, null, null)
+            // Отправляем SMS через NetworkHelper
+            val smsSent = networkHelper.sendSms(savedSmsNumber, message)
             
-            Toast.makeText(this, 
-                "✅ SMS sent to: $savedSmsNumber\n" +
-                "📍 Location included\n" +
-                if (isRecording) "🎤 Recording audio..." else "", 
-                Toast.LENGTH_LONG).show()
+            if (smsSent) {
+                showToast(
+                    "✅ SMS sent to: $savedSmsNumber\n" +
+                    "📍 Location: Included\n" +
+                    "📶 Network: $networkInfo\n" +
+                    if (isRecording) "🎤 Recording audio..." else ""
+                )
+            } else {
+                showError("❌ Failed to send SMS. Check phone number and permissions.")
+            }
             
         } catch (e: Exception) {
-            Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
+            showError("❌ Error: ${e.message}")
         }
     }
 
-    private fun stopRecording() {
+    // Проверка формата номера телефона
+    private fun isValidPhoneNumber(phoneNumber: String): Boolean {
+        return phoneNumber.startsWith("+") && phoneNumber.length > 10
+    }
+
+    private fun stopRecordingAndNotify() {
         audioRecorder.stopRecording()
-        Toast.makeText(this, "⏹️ Recording stopped", Toast.LENGTH_LONG).show()
+        showToast("⏹️ Recording stopped\n💾 Saved to: ${audioRecorder.getRecordedFilePath()}")
+    }
+
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     // Обработка разрешений
@@ -135,7 +162,7 @@ class MainActivity : AppCompatActivity() {
             for (i in grantResults.indices) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
-                    Toast.makeText(this, "Permission denied: ${permissions[i]}", Toast.LENGTH_LONG).show()
+                    showError("Permission denied: ${permissions[i]}")
                 }
             }
             if (allGranted) startEmergencyProcedure()
