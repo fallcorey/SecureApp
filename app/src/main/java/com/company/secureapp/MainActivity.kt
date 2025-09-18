@@ -19,7 +19,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var audioRecorder: AudioRecorderHelper
     private val SMS_PERMISSION_CODE = 1001
-    private val AUDIO_PERMISSION_CODE = 1002
+    private val handler = Handler(Looper.getMainLooper())
+    private var recordingRunnable: Runnable? = null
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -33,9 +34,8 @@ class MainActivity : AppCompatActivity() {
             val settingsButton = findViewById<Button>(R.id.settings_button)
 
             sosButton.setOnClickListener {
-                // Проверяем разрешения перед отправкой SMS
-                if (checkSmsPermission() && checkAudioPermission()) {
-                    sendEmergencySms()
+                if (checkAllPermissions()) {
+                    startEmergencyProcedure()
                 } else {
                     requestPermissions()
                 }
@@ -49,6 +49,11 @@ class MainActivity : AppCompatActivity() {
         } catch (e: Exception) {
             Toast.makeText(this, "App error: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    // Проверка всех разрешений
+    private fun checkAllPermissions(): Boolean {
+        return checkSmsPermission() && checkAudioPermission()
     }
 
     // Проверка разрешения на отправку SMS
@@ -88,39 +93,84 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
-    // Отправка экстренного SMS
-    private fun sendEmergencySms() {
+    // Основная процедура экстренного оповещения
+    private fun startEmergencyProcedure() {
         try {
-            // Начинаем запись звука
-            if (audioRecorder.startRecording()) {
-                Toast.makeText(this, "🎤 Recording started...", Toast.LENGTH_SHORT).show()
+            // Проверяем номер телефона
+            val savedSmsNumber = preferenceHelper.getString("sms_number", "")
+            if (savedSmsNumber.isBlank() || !savedSmsNumber.startsWith("+")) {
+                Toast.makeText(this, 
+                    "❌ Укажите номер в формате: +79123456789 в настройках", 
+                    Toast.LENGTH_LONG).show()
+                return
             }
 
-            val savedSmsNumber = preferenceHelper.getString("sms_number", "+1234567890")
-            val savedUserName = preferenceHelper.getString("user_name", "User")
-            val savedUserPhone = preferenceHelper.getString("user_phone", "")
-            
-            // Создаем сообщение
-            val message = "🚨 EMERGENCY ALERT from $savedUserName ($savedUserPhone)! " +
-                         "Need immediate assistance! Location: ..."
-            
+            // Начинаем запись звука
+            if (audioRecorder.startRecording()) {
+                val recordingsPath = audioRecorder.getRecordingsDirectory()
+                Toast.makeText(this, 
+                    "🎤 Запись начата (5 минут)\n💾 Сохраняется в: $recordingsPath", 
+                    Toast.LENGTH_LONG).show()
+                
+                // Запускаем таймер для отслеживания записи
+                startRecordingTimer()
+            }
+
             // Отправляем SMS
+            val savedUserName = preferenceHelper.getString("user_name", "User")
+            val message = "🚨 ЭКСТРЕННОЕ СООБЩЕНИЕ от $savedUserName! " +
+                         "Требуется немедленная помощь! " +
+                         "Аудиозапись ситуации ведется."
+            
             val smsManager = SmsManager.getDefault()
             smsManager.sendTextMessage(savedSmsNumber, null, message, null, null)
             
-            // Останавливаем запись через 15 секунд
-            Handler(Looper.getMainLooper()).postDelayed({
-                audioRecorder.stopRecording()
-                Toast.makeText(this, "⏹️ Recording stopped", Toast.LENGTH_SHORT).show()
-            }, 15000)
+            // Останавливаем запись через 5 минут
+            handler.postDelayed({
+                stopEmergencyProcedure()
+            }, 5 * 60 * 1000) // 5 минут
             
             Toast.makeText(this, 
-                "✅ SMS sent to: $savedSmsNumber\n🎤 Recording audio...", 
+                "✅ SMS отправлено на: $savedSmsNumber\n" +
+                "🎤 Идет запись (5 минут)...", 
                 Toast.LENGTH_LONG).show()
             
         } catch (e: Exception) {
-            Toast.makeText(this, "❌ Error: ${e.message}", Toast.LENGTH_LONG).show()
+            Toast.makeText(this, "❌ Ошибка: ${e.message}", Toast.LENGTH_LONG).show()
         }
+    }
+
+    // Таймер для отслеживания записи
+    private fun startRecordingTimer() {
+        recordingRunnable = object : Runnable {
+            override fun run() {
+                if (audioRecorder.isRecording()) {
+                    val remainingTime = audioRecorder.getRemainingTime()
+                    
+                    // Показываем уведомление каждые 30 секунд
+                    if (remainingTime % 30 == 0L && remainingTime > 0) {
+                        Toast.makeText(this@MainActivity, 
+                            "🎤 Запись идет... Осталось: ${remainingTime} сек", 
+                            Toast.LENGTH_SHORT).show()
+                    }
+                    
+                    // Продолжаем обновление каждую секунду
+                    handler.postDelayed(this, 1000)
+                }
+            }
+        }
+        recordingRunnable?.let { handler.post(it) }
+    }
+
+    // Остановка экстренной процедуры
+    private fun stopEmergencyProcedure() {
+        audioRecorder.stopRecording()
+        recordingRunnable?.let { handler.removeCallbacks(it) }
+        
+        val filePath = audioRecorder.getRecordedFilePath()
+        Toast.makeText(this, 
+            "⏹️ Запись завершена\n💾 Файл: $filePath", 
+            Toast.LENGTH_LONG).show()
     }
 
     // Обработка результата запроса разрешений
@@ -137,19 +187,19 @@ class MainActivity : AppCompatActivity() {
             for (i in grantResults.indices) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
-                    Toast.makeText(this, "Permission denied: ${permissions[i]}", Toast.LENGTH_LONG).show()
+                    Toast.makeText(this, "Разрешение denied: ${permissions[i]}", Toast.LENGTH_LONG).show()
                 }
             }
             
             if (allGranted) {
-                sendEmergencySms()
+                startEmergencyProcedure()
             }
         }
     }
 
     override fun onDestroy() {
         super.onDestroy()
-        // Останавливаем запись при закрытии приложения
-        audioRecorder.stopRecording()
+        stopEmergencyProcedure()
+        recordingRunnable?.let { handler.removeCallbacks(it) }
     }
 }
