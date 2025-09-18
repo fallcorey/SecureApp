@@ -1,25 +1,57 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
-    android:padding="24dp">
+    android:background="#F5F5F5">
 
+    <!-- Круглая SOS кнопка по центру -->
     <Button
         android:id="@+id/sos_button"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
+        android:layout_width="120dp"
+        android:layout_height="120dp"
+        android:layout_centerInParent="true"
         android:text="SOS"
-        android:textSize="24sp"
-        android:background="#FF0000"
-        android:textColor="#FFFFFF" />
+        android:textSize="20sp"
+        android:textColor="#FFFFFF"
+        android:background="@drawable/sos_button_bg"
+        android:elevation="8dp"
+        android:stateListAnimator="@null" />
 
+    <!-- Таймер обратного отсчета -->
+    <TextView
+        android:id="@+id/timer_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_above="@+id/sos_button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="20dp"
+        android:textSize="18sp"
+        android:textColor="#FF0000"
+        android:textStyle="bold"
+        android:visibility="gone" />
+
+    <!-- Статус отправки -->
+    <TextView
+        android:id="@+id/status_text"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/sos_button"
+        android:layout_centerHorizontal="true"
+        android:layout_marginTop="20dp"
+        android:textSize="16sp"
+        android:textColor="#666666"
+        android:visibility="gone" />
+
+    <!-- Кнопка настроек внизу -->
     <Button
         android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="16dp"
         android:text="Settings"
-        android:layout_marginTop="24dp" />
+        android:textColor="#2196F3"
+        android:background="@android:color/transparent" />
 
-</LinearLayout>
+</RelativeLayout>
