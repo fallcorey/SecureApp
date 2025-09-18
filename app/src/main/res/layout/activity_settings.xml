@@ -1,21 +1,31 @@
 <?xml version="1.0" encoding="utf-8"?>
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
-    android:layout_height="match_parent">
+    android:layout_height="match_parent"
+    android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:padding="16dp">
+        android:gravity="center"
+        android:layout_gravity="center_vertical">
 
+        <!-- Пустое пространство сверху -->
+        <Space
+            android:layout_width="match_parent"
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
+        <!-- Настройки по центру -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Emergency Settings"
-            android:textSize="18sp"
+            android:textSize="20sp"
             android:textStyle="bold"
-            android:layout_marginBottom="8dp" />
+            android:gravity="center"
+            android:layout_marginBottom="24dp" />
 
         <EditText
             android:id="@+id/sms_number"
@@ -23,22 +33,14 @@
             android:layout_height="wrap_content"
             android:hint="SMS Number (формат: +79123456789)"
             android:inputType="phone"
-            android:layout_marginTop="8dp" />
-
-        <EditText
-            android:id="@+id/server_url"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Server URL (optional)"
-            android:inputType="textUri"
-            android:layout_marginTop="8dp" />
+            android:layout_marginBottom="16dp" />
 
         <EditText
             android:id="@+id/user_full_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Your Full Name"
-            android:layout_marginTop="8dp" />
+            android:layout_marginBottom="16dp" />
 
         <EditText
             android:id="@+id/user_phone_number"
@@ -46,21 +48,21 @@
             android:layout_height="wrap_content"
             android:hint="Your Phone Number"
             android:inputType="phone"
-            android:layout_marginTop="8dp" />
+            android:layout_marginBottom="24dp" />
 
         <Button
             android:id="@+id/save_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="Save Settings"
-            android:layout_marginTop="24dp" />
-        <EditText
-            android:id="@+id/google_maps_url"
+            android:backgroundTint="#2196F3"
+            android:textColor="#FFFFFF" />
+
+        <!-- Пустое пространство снизу -->
+        <Space
             android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="Google Maps URL (optional)"
-            android:inputType="textUri"
-            android:layout_marginTop="8dp" />
-        
+            android:layout_height="0dp"
+            android:layout_weight="1" />
+
     </LinearLayout>
 </ScrollView>
