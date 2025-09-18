@@ -54,6 +54,13 @@
             android:layout_height="wrap_content"
             android:text="Save Settings"
             android:layout_marginTop="24dp" />
-
+        <EditText
+            android:id="@+id/google_maps_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Google Maps URL (optional)"
+            android:inputType="textUri"
+            android:layout_marginTop="8dp" />
+        
     </LinearLayout>
 </ScrollView>
