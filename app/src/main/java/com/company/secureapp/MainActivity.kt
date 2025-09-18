@@ -69,7 +69,7 @@ class MainActivity : AppCompatActivity() {
     private fun startCountdown() {
         isEmergencyActive = true
         sosButton.text = "CANCEL"
-        sosButton.setBackgroundResource(R.drawable.sos_button_bg_pressed)
+        sosButton.setBackgroundResource(android.R.drawable.btn_default)
         timerText.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
         statusText.text = "Release to cancel emergency"
@@ -93,13 +93,13 @@ class MainActivity : AppCompatActivity() {
         isEmergencyActive = false
         countDownTimer?.cancel()
         resetUI()
-        Toast.makeText(this, "Emergency cancelled", Toast.LENGTH_SHORT).show()
+        showToast("Emergency cancelled")
     }
 
     // Сброс UI к исходному состоянию
     private fun resetUI() {
         sosButton.text = "SOS"
-        sosButton.setBackgroundResource(R.drawable.sos_button_bg)
+        sosButton.setBackgroundResource(android.R.drawable.btn_default)
         timerText.visibility = View.GONE
         statusText.visibility = View.GONE
     }
@@ -113,7 +113,7 @@ class MainActivity : AppCompatActivity() {
             val savedUserName = preferenceHelper.getString("user_name", "User")
             
             if (savedSmsNumber.isBlank()) {
-                showError("❌ Please set SMS number in settings")
+                showError("Please set SMS number in settings")
                 resetUI()
                 return
             }
@@ -130,7 +130,7 @@ class MainActivity : AppCompatActivity() {
             }
 
             // Формируем сообщение
-            val message = "🚨 EMERGENCY from $savedUserName!\n" +
+            val message = "EMERGENCY from $savedUserName!\n" +
                          "Need immediate assistance!\n" +
                          "$locationInfo\n" +
                          "Network: $networkInfo\n" +
@@ -140,10 +140,10 @@ class MainActivity : AppCompatActivity() {
             val smsSent = networkHelper.sendSms(savedSmsNumber, message)
             
             if (smsSent) {
-                statusText.text = "✅ Emergency alert sent!"
+                statusText.text = "Emergency alert sent!"
                 showToast("Help is on the way! SMS sent to emergency contacts")
             } else {
-                statusText.text = "❌ Failed to send alert"
+                statusText.text = "Failed to send alert"
                 showError("Failed to send SMS. Trying alternative methods...")
             }
             
@@ -154,7 +154,7 @@ class MainActivity : AppCompatActivity() {
             }, 5000)
             
         } catch (e: Exception) {
-            statusText.text = "❌ Error occurred"
+            statusText.text = "Error occurred"
             showError("Error: ${e.message}")
             resetUI()
         }
@@ -166,9 +166,64 @@ class MainActivity : AppCompatActivity() {
         Log.d("AudioRecord", "Recording saved: $filePath")
     }
 
-    // ... остальные методы checkAllPermissions, requestAllPermissions, 
-    // onRequestPermissionsResult, onDestroy остаются без изменений
-    // из предыдущего кода
+    // Вспомогательные методы для показа сообщений
+    private fun showToast(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    private fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    // Проверка всех разрешений
+    private fun checkAllPermissions(): Boolean {
+        return checkSmsPermission() && checkAudioPermission() && checkLocationPermission()
+    }
+
+    private fun checkSmsPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkAudioPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+               ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    // Запрос всех разрешений
+    private fun requestAllPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
+        
+        if (!checkSmsPermission()) permissionsToRequest.add(Manifest.permission.SEND_SMS)
+        if (!checkAudioPermission()) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        if (!checkLocationPermission()) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+        
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), SMS_PERMISSION_CODE)
+        }
+    }
+
+    // Обработка разрешений
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == SMS_PERMISSION_CODE) {
+            var allGranted = true
+            for (i in grantResults.indices) {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false
+                    showError("Permission denied: ${permissions[i]}")
+                }
+            }
+            if (allGranted) startCountdown()
+        }
+    }
 
     override fun onDestroy() {
         super.onDestroy()
