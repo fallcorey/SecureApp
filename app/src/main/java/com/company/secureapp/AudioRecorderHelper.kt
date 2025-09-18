@@ -81,7 +81,7 @@ class AudioRecorderHelper(private val context: Context) {
         }
     }
 
-    // Получить путь к записанному файлу
+    // Получить путь к записанному файлу - ДОБАВЬТЕ ЭТОТ МЕТОД
     fun getRecordedFilePath(): String {
         return currentFile?.absolutePath ?: "No file recorded"
     }
