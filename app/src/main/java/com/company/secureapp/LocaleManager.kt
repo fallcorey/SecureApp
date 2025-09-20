@@ -1,4 +1,4 @@
-package com.company.secureapp.utils
+package com.fallcorey.secureapp.utils
 
 import android.content.Context
 import android.content.res.Configuration
