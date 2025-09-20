@@ -35,7 +35,7 @@ class SettingsActivity : BaseActivity() {
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
 
-        // Обработчики кнопок языка - используем метод changeLanguage из BaseActivity
+        // Обработчики кнопок языка
         langEngButton.setOnClickListener { 
             changeLanguage("en")
         }
@@ -55,9 +55,7 @@ class SettingsActivity : BaseActivity() {
 
             // Проверяем номер телефона
             if (smsNumberText.isNotBlank() && !smsNumberText.startsWith("+")) {
-                Toast.makeText(this, 
-                    "Phone number must start with '+' (format: +79123456789)", 
-                    Toast.LENGTH_LONG).show()
+                showMessage("Phone number must start with '+' (format: +79123456789)")
                 return@setOnClickListener
             }
 
@@ -71,14 +69,17 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
-                // ИСПРАВЛЕНО: Правильное использование Toast
-                Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_LONG).show()
+                showMessage(getString(R.string.settings_saved))
                 finish()
                 
             } catch (e: Exception) {
-                // ИСПРАВЛЕНО: Правильное использование Toast
-                Toast.makeText(this, "Save error: ${e.message}", Toast.LENGTH_LONG).show()
+                showMessage("Save error: ${e.message}")
             }
         }
+    }
+
+    // Вспомогательный метод для показа сообщений
+    private fun showMessage(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 }
