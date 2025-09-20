@@ -47,7 +47,7 @@ class MainActivity : BaseActivity() {
         settingsButton = findViewById(R.id.settings_button)
 
         // Устанавливаем тексты из ресурсов
-        sosButton.text = getString(R.string.sos_button)
+        sosButton.text = "SOS"  // Прямой текст вместо ресурса
         settingsButton.text = getString(R.string.settings_button)
 
         sosButton.setOnClickListener {
@@ -68,7 +68,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // Остальные методы остаются без изменений...
     // Таймер обратного отсчета 3 секунды
     private fun startCountdown() {
         isEmergencyActive = true
@@ -102,8 +101,8 @@ class MainActivity : BaseActivity() {
 
     // Сброс UI к исходному состоянию
     private fun resetUI() {
-        sosButton.text = getString(R.string.sos_button)
-        sosButton.setBackgroundResource(R.drawable.sos_button_background) // Возвращаем круглый фон
+        sosButton.text = "SOS"
+        sosButton.setBackgroundResource(R.drawable.sos_button_background)
         timerText.visibility = View.GONE
         statusText.visibility = View.GONE
     }
