@@ -1,6 +1,37 @@
 <resources>
     <string name="app_name">SecureApp</string>
-    <string name="sos_button_text">SOS</string>
-    <string name="settings_button_text">Settings</string>
-    <string name="save_button_text">Save Settings</string>
+    <string name="sos_button">SOS</string>
+    <string name="settings_button">Settings</string>
+    <string name="cancel_button">CANCEL</string>
+    
+    <!-- Main Activity -->
+    <string name="sending_in">Sending in: %d</string>
+    <string name="release_to_cancel">Release to cancel emergency</string>
+    <string name="sending_alert">Sending emergency alert…</string>
+    <string name="alert_sent">Emergency alert sent!</string>
+    <string name="alert_failed">Failed to send alert</string>
+    <string name="error_occurred">Error occurred</string>
+    <string name="help_on_way">Help is on the way! Alert sent to emergency contacts</string>
+    <string name="emergency_cancelled">Emergency cancelled</string>
+    
+    <!-- Settings -->
+    <string name="server_settings">Server Settings</string>
+    <string name="mattermost_settings">Mattermost Settings</string>
+    <string name="sms_settings">SMS Settings</string>
+    <string name="your_information">Your Information</string>
+    <string name="language_settings">Language Settings</string>
+    
+    <string name="server_url_hint">Server URL (https://…)</string>
+    <string name="auth_token_hint">Auth Token (optional)</string>
+    <string name="webhook_hint">Mattermost Webhook URL</string>
+    <string name="channel_hint">Channel Name (optional)</string>
+    <string name="sms_number_hint">SMS Number (+79123456789)</string>
+    <string name="full_name_hint">Your Full Name</string>
+    <string name="phone_hint">Your Phone Number</string>
+    
+    <string name="save_settings">💾 Save Settings</string>
+    <string name="settings_saved">✅ Settings saved!</string>
+    <string name="language_changed">Language changed. Restart app to apply.</string>
+    <string name="english">English</string>
+    <string name="russian">Russian</string>
 </resources>
