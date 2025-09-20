@@ -9,7 +9,7 @@
     <string name="release_to_cancel">Отпустите для отмены тревоги</string>
     <string name="sending_in">Отправка через: %s</string>
     
-    <!-- Новые строки для SettingsActivity -->
+    <!-- Settings Activity Strings -->
     <string name="language_settings">Настройки языка</string>
     <string name="english">Английский</string>
     <string name="russian">Русский</string>
