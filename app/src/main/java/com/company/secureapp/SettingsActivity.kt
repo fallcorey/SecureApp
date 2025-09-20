@@ -1,13 +1,11 @@
 package com.company.secureapp
 
-import android.content.Intent
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
-import androidx.appcompat.app.AppCompatActivity
 
-class SettingsActivity : BaseActivity() {  // Наследуем от BaseActivity!
+class SettingsActivity : BaseActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
 
@@ -73,10 +71,12 @@ class SettingsActivity : BaseActivity() {  // Наследуем от BaseActivi
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
+                // ИСПРАВЛЕНО: Правильное использование Toast
                 Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_LONG).show()
                 finish()
                 
             } catch (e: Exception) {
+                // ИСПРАВЛЕНО: Правильное использование Toast
                 Toast.makeText(this, "Save error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
