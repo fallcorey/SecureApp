@@ -11,28 +11,83 @@
         android:gravity="center"
         android:layout_gravity="center_vertical">
 
-        <!-- Пустое пространство сверху -->
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
-
-        <!-- Настройки по центру -->
+        <!-- Server Settings -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Emergency Settings"
-            android:textSize="20sp"
+            android:text="Server Settings"
+            android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/server_url"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Server URL (https://...)"
+            android:inputType="textUri"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/server_auth_token"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Auth Token (optional)"
+            android:inputType="textPassword"
+            android:layout_marginBottom="16dp" />
+
+        <!-- Mattermost Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Mattermost Settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <EditText
+            android:id="@+id/mattermost_webhook"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Mattermost Webhook URL"
+            android:inputType="textUri"
+            android:layout_marginBottom="12dp" />
+
+        <EditText
+            android:id="@+id/mattermost_channel"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:hint="Channel Name (optional)"
+            android:layout_marginBottom="16dp" />
+
+        <!-- SMS Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="SMS Settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
 
         <EditText
             android:id="@+id/sms_number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="SMS Number (формат: +79123456789)"
+            android:hint="SMS Number (+79123456789)"
             android:inputType="phone"
+            android:layout_marginBottom="12dp" />
+
+        <!-- User Info -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Your Information"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
             android:layout_marginBottom="16dp" />
 
         <EditText
@@ -40,7 +95,7 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="Your Full Name"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="12dp" />
 
         <EditText
             android:id="@+id/user_phone_number"
@@ -54,15 +109,10 @@
             android:id="@+id/save_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Save Settings"
+            android:text="💾 Save Settings"
             android:backgroundTint="#2196F3"
-            android:textColor="#FFFFFF" />
-
-        <!-- Пустое пространство снизу -->
-        <Space
-            android:layout_width="match_parent"
-            android:layout_height="0dp"
-            android:layout_weight="1" />
+            android:textColor="#FFFFFF"
+            android:textSize="16sp" />
 
     </LinearLayout>
 </ScrollView>
