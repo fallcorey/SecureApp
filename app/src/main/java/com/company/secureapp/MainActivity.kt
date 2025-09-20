@@ -50,6 +50,12 @@ class MainActivity : BaseActivity() {
         btnEnglish = findViewById(R.id.btn_english)
         btnRussian = findViewById(R.id.btn_russian)
 
+        // Устанавливаем тексты из ресурсов
+        sosButton.text = getString(R.string.sos_button)
+        settingsButton.text = getString(R.string.settings_button)
+        btnEnglish.text = getString(R.string.english_button)
+        btnRussian.text = getString(R.string.russian_button)
+
         // Кнопки для смены языка
         btnEnglish.setOnClickListener {
             changeLanguage("en")
@@ -84,12 +90,12 @@ class MainActivity : BaseActivity() {
         sosButton.setBackgroundResource(android.R.drawable.btn_default)
         timerText.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
-        statusText.text = "Release to cancel emergency"
+        statusText.text = getString(R.string.release_to_cancel)
 
         countDownTimer = object : CountDownTimer(3000, 1000) {
             override fun onTick(millisUntilFinished: Long) {
                 val seconds = (millisUntilFinished / 1000).toInt()
-                timerText.text = "Sending in: $seconds"
+                timerText.text = getString(R.string.sending_in, seconds.toString())
             }
 
             override fun onFinish() {
@@ -105,12 +111,12 @@ class MainActivity : BaseActivity() {
         isEmergencyActive = false
         countDownTimer?.cancel()
         resetUI()
-        showToast("Emergency cancelled")
+        showToast(getString(R.string.emergency_cancelled))
     }
 
     // Сброс UI к исходному состоянию
     private fun resetUI() {
-        sosButton.text = "SOS"
+        sosButton.text = getString(R.string.sos_button)
         sosButton.setBackgroundResource(android.R.drawable.btn_default)
         timerText.visibility = View.GONE
         statusText.visibility = View.GONE
