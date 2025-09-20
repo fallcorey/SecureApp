@@ -71,7 +71,8 @@ class SettingsActivity : AppCompatActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
-                Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_LONG).show()
+                // ИСПРАВЛЕНО: Используем getString() для получения строки из ресурсов
+                Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_LONG).show()
                 finish()
                 
             } catch (e: Exception) {
@@ -84,7 +85,8 @@ class SettingsActivity : AppCompatActivity() {
         val preferences = getSharedPreferences("app_settings", MODE_PRIVATE)
         preferences.edit().putString("app_language", languageCode).apply()
         
-        Toast.makeText(this, R.string.language_changed, Toast.LENGTH_LONG).show()
+        // ИСПРАВЛЕНО: Используем getString() для получения строки из ресурсов
+        Toast.makeText(this, getString(R.string.language_changed), Toast.LENGTH_LONG).show()
         
         // Перезапускаем активити для применения языка
         finish()
