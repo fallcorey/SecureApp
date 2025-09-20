@@ -7,7 +7,6 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import android.Manifest
 import android.content.pm.PackageManager
@@ -40,14 +39,14 @@ class MainActivity : BaseActivity() {
         locationHelper = LocationHelper(this)
         networkHelper = NetworkHelper(this)
 
-        // Находим элементы (только нужные)
+        // Находим элементы
         sosButton = findViewById(R.id.sos_button)
         timerText = findViewById(R.id.timer_text)
         statusText = findViewById(R.id.status_text)
         settingsButton = findViewById(R.id.settings_button)
 
-        // Устанавливаем тексты из ресурсов
-        sosButton.text = "SOS"  // Прямой текст вместо ресурса
+        // Устанавливаем тексты
+        sosButton.text = "SOS"
         settingsButton.text = getString(R.string.settings_button)
 
         sosButton.setOnClickListener {
@@ -96,8 +95,7 @@ class MainActivity : BaseActivity() {
         isEmergencyActive = false
         countDownTimer?.cancel()
         resetUI()
-        // ИСПРАВЛЕНО: Правильное использование Toast
-        Toast.makeText(this, getString(R.string.emergency_cancelled), Toast.LENGTH_LONG).show()
+        showToast(R.string.emergency_cancelled)
     }
 
     // Сброс UI к исходному состоянию
@@ -117,7 +115,7 @@ class MainActivity : BaseActivity() {
             val savedUserName = preferenceHelper.getString("user_name", "User")
             
             if (savedSmsNumber.isBlank()) {
-                showError("Please set SMS number in settings")
+                showToast("Please set SMS number in settings")
                 resetUI()
                 return
             }
@@ -148,7 +146,7 @@ class MainActivity : BaseActivity() {
                 showToast("Help is on the way! SMS sent to emergency contacts")
             } else {
                 statusText.text = "Failed to send alert"
-                showError("Failed to send SMS. Trying alternative methods...")
+                showToast("Failed to send SMS. Trying alternative methods...")
             }
             
             // Автоматический сброс через 5 секунд
@@ -159,7 +157,7 @@ class MainActivity : BaseActivity() {
             
         } catch (e: Exception) {
             statusText.text = "Error occurred"
-            showError("Error: ${e.message}")
+            showToast("Error: ${e.message}")
             resetUI()
         }
     }
@@ -168,15 +166,6 @@ class MainActivity : BaseActivity() {
         audioRecorder.stopRecording()
         val filePath = audioRecorder.getRecordedFilePath()
         Log.d("AudioRecord", "Recording saved: $filePath")
-    }
-
-    // Вспомогательные методы для показа сообщений
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 
     // Проверка всех разрешений
@@ -222,7 +211,7 @@ class MainActivity : BaseActivity() {
             for (i in grantResults.indices) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
-                    showError("Permission denied: ${permissions[i]}")
+                    showToast("Permission denied: ${permissions[i]}")
                 }
             }
             if (allGranted) startCountdown()
