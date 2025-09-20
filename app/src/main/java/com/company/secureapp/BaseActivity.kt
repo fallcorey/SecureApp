@@ -3,6 +3,7 @@ package com.company.secureapp
 import android.content.Context
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
+import com.fallcorey.secureapp.utils.LocaleManager
 
 open class BaseActivity : AppCompatActivity() {
 
