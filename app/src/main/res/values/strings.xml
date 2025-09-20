@@ -25,4 +25,8 @@
     <string name="full_name_hint">Full Name</string>
     <string name="phone_hint">Phone Number</string>
     <string name="save_settings">Save Settings</string>
+    
+    <!-- Новые строки для Toast сообщений -->
+    <string name="settings_saved">Settings saved successfully!</string>
+    <string name="language_changed">Language changed. Restarting app...</string>
 </resources>
