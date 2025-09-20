@@ -3,27 +3,14 @@
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
-    android:viewportHeight="108">
-    
-    <!-- Android robot with shield -->
-    <group>
-        <!-- Shield -->
+    android:viewportHeight="108"
+    android:tint="#FFD700">
+    <group android:scaleX="0.7"
+           android:scaleY="0.7"
+           android:translateX="16.2"
+           android:translateY="16.2">
         <path
-            android:fillColor="#2196F3"
-            android:pathData="M54,20L20,40v20c0,18.7 15.3,34 34,34s34,-15.3 34,-34V40L54,20z" />
-        <path
-            android:fillColor="#FFFFFF"
-            android:pathData="M54,45c5.5,0 10,4.5 10,10v10c0,5.5 -4.5,10 -10,10s-10,-4.5 -10,-10V55C44,49.5 48.5,45 54,45z" />
-        
-        <!-- Android head -->
-        <path
-            android:fillColor="#4CAF50"
-            android:pathData="M40,30c0,-2.2 1.8,-4 4,-4s4,1.8 4,4s-1.8,4 -4,4S40,32.2 40,30z" />
-        <path
-            android:fillColor="#4CAF50"
-            android:pathData="M60,30c0,-2.2 1.8,-4 4,-4s4,1.8 4,4s-1.8,4 -4,4S60,32.2 60,30z" />
-        <path
-            android:fillColor="#4CAF50"
-            android:pathData="M38,35c-2.2,0 -4,1.8 -4,4v5c0,2.2 1.8,4 4,4h32c2.2,0 4,-1.8 4,-4v-5c0,-2.2 -1.8,-4 -4,-4H38z" />
+            android:fillColor="@android:color/white"
+            android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5L12,1z"/>
     </group>
 </vector>
