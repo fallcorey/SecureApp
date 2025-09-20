@@ -15,7 +15,7 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.view.View
 
-class MainActivity : AppCompatActivity() {
+class MainActivity : BaseActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var audioRecorder: AudioRecorderHelper
@@ -27,6 +27,8 @@ class MainActivity : AppCompatActivity() {
     private lateinit var timerText: TextView
     private lateinit var statusText: TextView
     private lateinit var settingsButton: Button
+    private lateinit var btnEnglish: Button
+    private lateinit var btnRussian: Button
     
     private var countDownTimer: CountDownTimer? = null
     private var isEmergencyActive = false
@@ -46,6 +48,17 @@ class MainActivity : AppCompatActivity() {
         timerText = findViewById(R.id.timer_text)
         statusText = findViewById(R.id.status_text)
         settingsButton = findViewById(R.id.settings_button)
+        btnEnglish = findViewById(R.id.btn_english)
+        btnRussian = findViewById(R.id.btn_russian)
+
+        // Кнопки для смены языка
+        btnEnglish.setOnClickListener {
+            changeLanguage("en")
+        }
+
+        btnRussian.setOnClickListener {
+            changeLanguage("ru")
+        }
 
         sosButton.setOnClickListener {
             if (isEmergencyActive) {
