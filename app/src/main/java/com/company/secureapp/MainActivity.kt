@@ -237,8 +237,10 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    override fun onDestroy() {
-        super.onDestroy()
+    // Убираем onDestroy, так как он не объявлен в BaseActivity
+    // Вместо этого используем onStop или onPause для cleanup
+    override fun onStop() {
+        super.onStop()
         countDownTimer?.cancel()
         audioRecorder.cleanup()
         handler.removeCallbacksAndMessages(null)
