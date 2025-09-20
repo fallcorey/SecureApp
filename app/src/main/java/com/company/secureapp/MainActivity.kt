@@ -96,7 +96,8 @@ class MainActivity : BaseActivity() {
         isEmergencyActive = false
         countDownTimer?.cancel()
         resetUI()
-        showToast(getString(R.string.emergency_cancelled))
+        // ИСПРАВЛЕНО: Правильное использование Toast
+        Toast.makeText(this, getString(R.string.emergency_cancelled), Toast.LENGTH_LONG).show()
     }
 
     // Сброс UI к исходному состоянию
