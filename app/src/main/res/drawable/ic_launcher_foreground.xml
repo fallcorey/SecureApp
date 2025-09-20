@@ -3,14 +3,21 @@
     android:width="108dp"
     android:height="108dp"
     android:viewportWidth="108"
-    android:viewportHeight="108"
-    android:tint="#FFD700">
-    <group android:scaleX="0.7"
-           android:scaleY="0.7"
-           android:translateX="16.2"
-           android:translateY="16.2">
+    android:viewportHeight="108">
+
+    <!-- Большой желтый щит по центру -->
+    <group
+        android:translateX="24"
+        android:translateY="24">
         <path
-            android:fillColor="@android:color/white"
-            android:pathData="M12,1L3,5v6c0,5.55 3.84,10.74 9,12 5.16,-1.26 9,-6.45 9,-12V5L12,1z"/>
+            android:fillColor="#FFD700"
+            android:pathData="M30,0 L60,10 L60,50 L30,60 L0,50 L0,10 Z"/>
+        <path
+            android:fillColor="#000000"
+            android:pathData="M30,2 L58,11 L58,49 L30,58 L2,49 L2,11 Z"/>
+        <path
+            android:fillColor="#FFFFFF"
+            android:pathData="M40,25 L35,30 L40,35 L45,30 Z"/>
     </group>
+
 </vector>
