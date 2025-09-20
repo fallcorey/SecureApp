@@ -3,7 +3,6 @@ package com.company.secureapp
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
-import android.widget.Toast
 
 class SettingsActivity : BaseActivity() {
 
@@ -55,7 +54,7 @@ class SettingsActivity : BaseActivity() {
 
             // Проверяем номер телефона
             if (smsNumberText.isNotBlank() && !smsNumberText.startsWith("+")) {
-                showMessage("Phone number must start with '+' (format: +79123456789)")
+                showToast("Phone number must start with '+' (format: +79123456789)")
                 return@setOnClickListener
             }
 
@@ -69,17 +68,12 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
-                showMessage(getString(R.string.settings_saved))
+                showToast(R.string.settings_saved)
                 finish()
                 
             } catch (e: Exception) {
-                showMessage("Save error: ${e.message}")
+                showToast("Save error: ${e.message}")
             }
         }
-    }
-
-    // Вспомогательный метод для показа сообщений
-    private fun showMessage(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
     }
 }
