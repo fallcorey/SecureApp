@@ -9,7 +9,7 @@
     <string name="release_to_cancel">Release to cancel emergency</string>
     <string name="sending_in">Sending in: %s</string>
     
-    <!-- Новые строки для SettingsActivity -->
+    <!-- Settings Activity Strings -->
     <string name="language_settings">Language Settings</string>
     <string name="english">English</string>
     <string name="russian">Russian</string>
