@@ -1,10 +1,14 @@
 package com.company.secureapp
 
+import android.content.Intent
+import android.content.res.Configuration
+import android.content.res.Resources
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import java.util.Locale
 
 class SettingsActivity : AppCompatActivity() {
 
@@ -17,6 +21,8 @@ class SettingsActivity : AppCompatActivity() {
         preferenceHelper = SimplePreferenceHelper(this)
 
         val saveButton = findViewById<Button>(R.id.save_button)
+        val langEngButton = findViewById<Button>(R.id.lang_eng_button)
+        val langRuButton = findViewById<Button>(R.id.lang_ru_button)
         val serverUrl = findViewById<EditText>(R.id.server_url)
         val serverAuthToken = findViewById<EditText>(R.id.server_auth_token)
         val mattermostWebhook = findViewById<EditText>(R.id.mattermost_webhook)
@@ -33,6 +39,10 @@ class SettingsActivity : AppCompatActivity() {
         smsNumber.setText(preferenceHelper.getString("sms_number", ""))
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
+
+        // Обработчики кнопок языка
+        langEngButton.setOnClickListener { setLanguage("en") }
+        langRuButton.setOnClickListener { setLanguage("ru") }
 
         saveButton.setOnClickListener {
             val serverUrlText = serverUrl.text.toString().trim()
@@ -61,19 +71,23 @@ class SettingsActivity : AppCompatActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
-                // Показываем успешное сообщение
-                var successMessage = "✅ Settings saved!\n"
-                
-                if (serverUrlText.isNotBlank()) successMessage += "🌐 Server: Enabled\n"
-                if (mattermostWebhookText.isNotBlank()) successMessage += "💬 Mattermost: Enabled\n"
-                if (smsNumberText.isNotBlank()) successMessage += "📱 SMS: $smsNumberText\n"
-                
-                Toast.makeText(this, successMessage, Toast.LENGTH_LONG).show()
+                Toast.makeText(this, R.string.settings_saved, Toast.LENGTH_LONG).show()
                 finish()
                 
             } catch (e: Exception) {
                 Toast.makeText(this, "Save error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
+    }
+
+    private fun setLanguage(languageCode: String) {
+        val preferences = getSharedPreferences("app_settings", MODE_PRIVATE)
+        preferences.edit().putString("app_language", languageCode).apply()
+        
+        Toast.makeText(this, R.string.language_changed, Toast.LENGTH_LONG).show()
+        
+        // Перезапускаем активити для применения языка
+        finish()
+        startActivity(Intent(this, SettingsActivity::class.java))
     }
 }
