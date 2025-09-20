@@ -1,16 +1,13 @@
 package com.company.secureapp
 
 import android.content.Intent
-import android.content.res.Configuration
-import android.content.res.Resources
 import android.os.Bundle
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.util.Locale
 
-class SettingsActivity : AppCompatActivity() {
+class SettingsActivity : BaseActivity() {  // Наследуем от BaseActivity!
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
 
@@ -40,9 +37,14 @@ class SettingsActivity : AppCompatActivity() {
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
 
-        // Обработчики кнопок языка
-        langEngButton.setOnClickListener { setLanguage("en") }
-        langRuButton.setOnClickListener { setLanguage("ru") }
+        // Обработчики кнопок языка - используем метод changeLanguage из BaseActivity
+        langEngButton.setOnClickListener { 
+            changeLanguage("en")
+        }
+        
+        langRuButton.setOnClickListener { 
+            changeLanguage("ru")
+        }
 
         saveButton.setOnClickListener {
             val serverUrlText = serverUrl.text.toString().trim()
@@ -71,7 +73,6 @@ class SettingsActivity : AppCompatActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
                 
-                // ИСПРАВЛЕНО: Используем getString() для получения строки из ресурсов
                 Toast.makeText(this, getString(R.string.settings_saved), Toast.LENGTH_LONG).show()
                 finish()
                 
@@ -79,17 +80,5 @@ class SettingsActivity : AppCompatActivity() {
                 Toast.makeText(this, "Save error: ${e.message}", Toast.LENGTH_LONG).show()
             }
         }
-    }
-
-    private fun setLanguage(languageCode: String) {
-        val preferences = getSharedPreferences("app_settings", MODE_PRIVATE)
-        preferences.edit().putString("app_language", languageCode).apply()
-        
-        // ИСПРАВЛЕНО: Используем getString() для получения строки из ресурсов
-        Toast.makeText(this, getString(R.string.language_changed), Toast.LENGTH_LONG).show()
-        
-        // Перезапускаем активити для применения языка
-        finish()
-        startActivity(Intent(this, SettingsActivity::class.java))
     }
 }
