@@ -1,6 +1,7 @@
 package com.company.secureapp
 
 import android.content.Context
+import android.content.Intent
 import android.os.Bundle
 import androidx.appcompat.app.AppCompatActivity
 import com.fallcorey.secureapp.utils.LocaleManager
@@ -19,9 +20,11 @@ open class BaseActivity : AppCompatActivity() {
 
     fun changeLanguage(languageCode: String) {
         LocaleManager.saveLanguage(this, languageCode)
-        LocaleManager.setLocale(this, languageCode)
         
-        // Пересоздаем активность для применения изменений
-        recreate()
+        // Полностью перезапускаем приложение для применения языка
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+        finishAffinity()
     }
 }
