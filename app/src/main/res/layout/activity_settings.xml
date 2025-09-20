@@ -11,11 +11,50 @@
         android:gravity="center"
         android:layout_gravity="center_vertical">
 
+        <!-- Language Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/language_settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="16dp" />
+
+        <LinearLayout
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:orientation="horizontal"
+            android:gravity="center"
+            android:layout_marginBottom="24dp">
+
+            <Button
+                android:id="@+id/lang_eng_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginEnd="8dp"
+                android:text="@string/english"
+                android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF" />
+
+            <Button
+                android:id="@+id/lang_ru_button"
+                android:layout_width="0dp"
+                android:layout_height="wrap_content"
+                android:layout_weight="1"
+                android:layout_marginStart="8dp"
+                android:text="@string/russian"
+                android:backgroundTint="#2196F3"
+                android:textColor="#FFFFFF" />
+
+        </LinearLayout>
+
         <!-- Server Settings -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Server Settings"
+            android:text="@string/server_settings"
             android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
@@ -25,7 +64,7 @@
             android:id="@+id/server_url"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Server URL (https://...)"
+            android:hint="@string/server_url_hint"
             android:inputType="textUri"
             android:layout_marginBottom="12dp" />
 
@@ -33,7 +72,7 @@
             android:id="@+id/server_auth_token"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Auth Token (optional)"
+            android:hint="@string/auth_token_hint"
             android:inputType="textPassword"
             android:layout_marginBottom="16dp" />
 
@@ -41,7 +80,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Mattermost Settings"
+            android:text="@string/mattermost_settings"
             android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
@@ -51,7 +90,7 @@
             android:id="@+id/mattermost_webhook"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Mattermost Webhook URL"
+            android:hint="@string/webhook_hint"
             android:inputType="textUri"
             android:layout_marginBottom="12dp" />
 
@@ -59,14 +98,14 @@
             android:id="@+id/mattermost_channel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Channel Name (optional)"
+            android:hint="@string/channel_hint"
             android:layout_marginBottom="16dp" />
 
         <!-- SMS Settings -->
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="SMS Settings"
+            android:text="@string/sms_settings"
             android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
@@ -76,7 +115,7 @@
             android:id="@+id/sms_number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="SMS Number (+79123456789)"
+            android:hint="@string/sms_number_hint"
             android:inputType="phone"
             android:layout_marginBottom="12dp" />
 
@@ -84,7 +123,7 @@
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Your Information"
+            android:text="@string/your_information"
             android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
@@ -94,14 +133,14 @@
             android:id="@+id/user_full_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Your Full Name"
+            android:hint="@string/full_name_hint"
             android:layout_marginBottom="12dp" />
 
         <EditText
             android:id="@+id/user_phone_number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:hint="Your Phone Number"
+            android:hint="@string/phone_hint"
             android:inputType="phone"
             android:layout_marginBottom="24dp" />
 
@@ -109,7 +148,7 @@
             android:id="@+id/save_button"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="💾 Save Settings"
+            android:text="@string/save_settings"
             android:backgroundTint="#2196F3"
             android:textColor="#FFFFFF"
             android:textSize="16sp" />
