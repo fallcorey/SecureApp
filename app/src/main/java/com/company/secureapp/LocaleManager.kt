@@ -1,4 +1,4 @@
-package com.fallcorey.secureapp.utils
+package com.company.secureapp.utils
 
 import android.content.Context
 import android.content.res.Configuration
@@ -21,6 +21,7 @@ object LocaleManager {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             configuration.setLocale(locale)
+            configuration.setLayoutDirection(locale)
         } else {
             configuration.locale = locale
         }
@@ -42,5 +43,23 @@ object LocaleManager {
     fun saveLanguage(context: Context, languageCode: String) {
         val preferences = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
         preferences.edit().putString("selected_language", languageCode).apply()
+    }
+
+    // Метод для принудительного обновления языка
+    fun updateLanguage(context: Context, languageCode: String) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+
+        val resources: Resources = context.resources
+        val configuration: Configuration = resources.configuration
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            configuration.setLocale(locale)
+            configuration.setLayoutDirection(locale)
+        } else {
+            configuration.locale = locale
+        }
+
+        resources.updateConfiguration(configuration, resources.displayMetrics)
     }
 }
