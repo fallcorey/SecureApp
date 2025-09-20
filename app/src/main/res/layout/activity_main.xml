@@ -1,47 +1,59 @@
 <?xml version="1.0" encoding="utf-8"?>
-<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:app="http://schemas.android.com/apk/res-auto"
     xmlns:tools="http://schemas.android.com/tools"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
-    android:orientation="vertical"
-    android:gravity="center"
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- SOS кнопка - круглая -->
-    <Button
-        android:id="@+id/sos_button"
-        android:layout_width="200dp"
-        android:layout_height="200dp"
-        android:text="@string/sos_button"
-        android:textSize="24sp"
-        android:background="@drawable/sos_button_background"
-        android:textColor="#FFFFFF"
-        android:layout_marginBottom="20dp"/>
-
-    <TextView
-        android:id="@+id/timer_text"
-        android:layout_width="wrap_content"
+    <!-- Центральный контейнер для SOS кнопки и текстов -->
+    <LinearLayout
+        android:layout_width="match_parent"
         android:layout_height="wrap_content"
-        android:textSize="18sp"
-        android:visibility="gone"
-        android:layout_marginBottom="8dp"/>
+        android:orientation="vertical"
+        android:gravity="center"
+        android:layout_centerInParent="true">
 
-    <TextView
-        android:id="@+id/status_text"
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:textSize="16sp"
-        android:visibility="gone"
-        android:layout_marginBottom="20dp"/>
+        <!-- SOS кнопка - круглая -->
+        <Button
+            android:id="@+id/sos_button"
+            android:layout_width="200dp"
+            android:layout_height="200dp"
+            android:text="@string/sos_button"
+            android:textSize="24sp"
+            android:background="@drawable/sos_button_background"
+            android:textColor="#FFFFFF"
+            android:layout_marginBottom="20dp"/>
 
-    <!-- Только кнопка настроек -->
+        <TextView
+            android:id="@+id/timer_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="18sp"
+            android:visibility="gone"
+            android:layout_marginBottom="8dp"/>
+
+        <TextView
+            android:id="@+id/status_text"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:textSize="16sp"
+            android:visibility="gone"
+            android:layout_marginBottom="20dp"/>
+
+    </LinearLayout>
+
+    <!-- Кнопка настроек внизу экрана -->
     <Button
         android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:text="@string/settings_button"
-        android:layout_marginTop="20dp"/>
+        android:layout_alignParentBottom="true"
+        android:layout_centerHorizontal="true"
+        android:layout_marginBottom="30dp"
+        android:backgroundTint="#2196F3"
+        android:textColor="#FFFFFF"/>
 
-</LinearLayout>
+</RelativeLayout>
