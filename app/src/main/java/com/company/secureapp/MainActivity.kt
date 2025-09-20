@@ -26,8 +26,6 @@ class MainActivity : BaseActivity() {
     private lateinit var timerText: TextView
     private lateinit var statusText: TextView
     private lateinit var settingsButton: Button
-    private lateinit var btnEnglish: Button
-    private lateinit var btnRussian: Button
     
     private var countDownTimer: CountDownTimer? = null
     private var isEmergencyActive = false
@@ -42,28 +40,15 @@ class MainActivity : BaseActivity() {
         locationHelper = LocationHelper(this)
         networkHelper = NetworkHelper(this)
 
-        // Находим элементы
+        // Находим элементы (только нужные)
         sosButton = findViewById(R.id.sos_button)
         timerText = findViewById(R.id.timer_text)
         statusText = findViewById(R.id.status_text)
         settingsButton = findViewById(R.id.settings_button)
-        btnEnglish = findViewById(R.id.btn_english)
-        btnRussian = findViewById(R.id.btn_russian)
 
         // Устанавливаем тексты из ресурсов
         sosButton.text = getString(R.string.sos_button)
         settingsButton.text = getString(R.string.settings_button)
-        btnEnglish.text = getString(R.string.english_button)
-        btnRussian.text = getString(R.string.russian_button)
-
-        // Кнопки для смены языка
-        btnEnglish.setOnClickListener {
-            changeLanguage("en")
-        }
-
-        btnRussian.setOnClickListener {
-            changeLanguage("ru")
-        }
 
         sosButton.setOnClickListener {
             if (isEmergencyActive) {
@@ -83,6 +68,7 @@ class MainActivity : BaseActivity() {
         }
     }
 
+    // Остальные методы остаются без изменений...
     // Таймер обратного отсчета 3 секунды
     private fun startCountdown() {
         isEmergencyActive = true
@@ -117,7 +103,7 @@ class MainActivity : BaseActivity() {
     // Сброс UI к исходному состоянию
     private fun resetUI() {
         sosButton.text = getString(R.string.sos_button)
-        sosButton.setBackgroundResource(android.R.drawable.btn_default)
+        sosButton.setBackgroundResource(R.drawable.sos_button_background) // Возвращаем круглый фон
         timerText.visibility = View.GONE
         statusText.visibility = View.GONE
     }
