@@ -16,7 +16,7 @@
         android:layout_height="200dp"
         android:text="SOS"
         android:textSize="24sp"
-        android:background="#FFFF0000"  <!-- Красный цвет для SOS -->
+        android:background="#FFFF0000"
         android:textColor="#FFFFFF"
         android:layout_marginBottom="20dp"/>
 
