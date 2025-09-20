@@ -9,15 +9,15 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- Ваш существующий контент (SOS кнопка, таймер и т.д.) -->
-
+    <!-- SOS кнопка - убираем background который отсутствует -->
     <Button
         android:id="@+id/sos_button"
         android:layout_width="200dp"
         android:layout_height="200dp"
         android:text="SOS"
         android:textSize="24sp"
-        android:background="@drawable/sos_button_background"
+        android:background="#FFFF0000"  <!-- Красный цвет для SOS -->
+        android:textColor="#FFFFFF"
         android:layout_marginBottom="20dp"/>
 
     <TextView
