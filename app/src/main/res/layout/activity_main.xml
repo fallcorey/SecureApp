@@ -9,14 +9,14 @@
     android:padding="16dp"
     tools:context=".MainActivity">
 
-    <!-- SOS кнопка - убираем background который отсутствует -->
+    <!-- SOS кнопка - круглая -->
     <Button
         android:id="@+id/sos_button"
         android:layout_width="200dp"
         android:layout_height="200dp"
-        android:text="SOS"
+        android:text="@string/sos_button"
         android:textSize="24sp"
-        android:background="#FFFF0000"
+        android:background="@drawable/sos_button_background"
         android:textColor="#FFFFFF"
         android:layout_marginBottom="20dp"/>
 
@@ -36,39 +36,12 @@
         android:visibility="gone"
         android:layout_marginBottom="20dp"/>
 
-    <!-- Кнопки для смены языка -->
-    <LinearLayout
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:orientation="horizontal"
-        android:gravity="center"
-        android:layout_marginTop="20dp">
-
-        <Button
-            android:id="@+id/btn_english"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="English"
-            android:layout_margin="8dp"
-            android:backgroundTint="#FFD700"
-            android:textColor="#000000"/>
-
-        <Button
-            android:id="@+id/btn_russian"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:text="Русский"
-            android:layout_margin="8dp"
-            android:backgroundTint="#FFD700"
-            android:textColor="#000000"/>
-
-    </LinearLayout>
-
+    <!-- Только кнопка настроек -->
     <Button
         android:id="@+id/settings_button"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
-        android:text="Settings"
+        android:text="@string/settings_button"
         android:layout_marginTop="20dp"/>
 
 </LinearLayout>
