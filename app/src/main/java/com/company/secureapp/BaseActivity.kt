@@ -1,4 +1,4 @@
-package com.company.secureapp
+package com.fallcorey.secureapp
 
 import android.content.Context
 import android.os.Bundle
