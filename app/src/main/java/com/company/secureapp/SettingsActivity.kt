@@ -1,6 +1,8 @@
 package com.company.secureapp
 
 import android.os.Bundle
+import android.view.View
+import android.widget.AdapterView
 import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
@@ -11,6 +13,7 @@ class SettingsActivity : BaseActivity() {
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var languageSpinner: Spinner
     private var currentLanguage: String = "en"
+    private var languageChanged = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -44,6 +47,22 @@ class SettingsActivity : BaseActivity() {
         currentLanguage = preferenceHelper.getString("app_language", "en")
         languageSpinner.setSelection(if (currentLanguage == "ru") 1 else 0)
 
+        // Обработчик выбора языка
+        languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
+            override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
+                val selectedLanguage = if (position == 1) "ru" else "en"
+                
+                if (selectedLanguage != currentLanguage) {
+                    // Меняем язык сразу при выборе
+                    preferenceHelper.saveString("app_language", selectedLanguage)
+                    changeLanguage(selectedLanguage)
+                    languageChanged = true
+                }
+            }
+
+            override fun onNothingSelected(parent: AdapterView<*>?) {}
+        }
+
         saveButton.setOnClickListener {
             val serverUrlText = serverUrl.text.toString().trim()
             val serverAuthTokenText = serverAuthToken.text.toString().trim()
@@ -69,13 +88,10 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
 
-                // Сохраняем выбранный язык
-                val selectedLanguage = if (languageSpinner.selectedItemPosition == 1) "ru" else "en"
-                preferenceHelper.saveString("app_language", selectedLanguage)
-
-                // Применяем язык если он изменился
-                if (currentLanguage != selectedLanguage) {
-                    changeLanguage(selectedLanguage)
+                if (languageChanged) {
+                    showToast(R.string.settings_saved)
+                    // Закрываем активность после смены языка
+                    finish()
                 } else {
                     showToast(R.string.settings_saved)
                     finish()
@@ -96,5 +112,17 @@ class SettingsActivity : BaseActivity() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         languageSpinner.adapter = adapter
+    }
+
+    override fun onBackPressed() {
+        if (languageChanged) {
+            // При смене языка перезапускаем главный экран
+            val intent = Intent(this, MainActivity::class.java)
+            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+            startActivity(intent)
+            finish()
+        } else {
+            super.onBackPressed()
+        }
     }
 }
