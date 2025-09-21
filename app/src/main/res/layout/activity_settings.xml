@@ -2,14 +2,14 @@
 <ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:fillViewport="true"
     android:padding="16dp">
 
     <LinearLayout
         android:layout_width="match_parent"
         android:layout_height="wrap_content"
         android:orientation="vertical"
-        android:gravity="center"
-        android:layout_gravity="center_vertical">
+        android:gravity="center_horizontal">
 
         <!-- Server Settings -->
         <TextView
@@ -21,6 +21,13 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Server URL:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
         <EditText
             android:id="@+id/server_url"
             android:layout_width="match_parent"
@@ -29,13 +36,20 @@
             android:inputType="textUri"
             android:layout_marginBottom="12dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Auth Token:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
         <EditText
             android:id="@+id/server_auth_token"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/auth_token_hint"
             android:inputType="textPassword"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="24dp" />
 
         <!-- Mattermost Settings -->
         <TextView
@@ -47,6 +61,13 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Webhook URL:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
         <EditText
             android:id="@+id/mattermost_webhook"
             android:layout_width="match_parent"
@@ -55,12 +76,19 @@
             android:inputType="textUri"
             android:layout_marginBottom="12dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Channel Name:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
         <EditText
             android:id="@+id/mattermost_channel"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/channel_hint"
-            android:layout_marginBottom="16dp" />
+            android:layout_marginBottom="24dp" />
 
         <!-- SMS Settings -->
         <TextView
@@ -72,13 +100,20 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Emergency SMS Number:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
         <EditText
             android:id="@+id/sms_number"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/sms_number_hint"
             android:inputType="phone"
-            android:layout_marginBottom="12dp" />
+            android:layout_marginBottom="24dp" />
 
         <!-- User Info -->
         <TextView
@@ -90,12 +125,26 @@
             android:gravity="center"
             android:layout_marginBottom="16dp" />
 
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Full Name:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
+
         <EditText
             android:id="@+id/user_full_name"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:hint="@string/full_name_hint"
             android:layout_marginBottom="12dp" />
+
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="Phone Number:"
+            android:textSize="14sp"
+            android:layout_marginBottom="4dp" />
 
         <EditText
             android:id="@+id/user_phone_number"
@@ -113,14 +162,14 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="16dp" />
 
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:text="@string/recording_time"
             android:textSize="16sp"
-            android:layout_marginBottom="4dp" />
+            android:layout_marginBottom="8dp" />
 
         <TextView
             android:layout_width="match_parent"
@@ -128,7 +177,7 @@
             android:text="@string/recording_time_summary"
             android:textSize="12sp"
             android:textColor="#666666"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="12dp" />
 
         <Spinner
             android:id="@+id/recording_time_spinner"
@@ -145,7 +194,7 @@
             android:textSize="18sp"
             android:textStyle="bold"
             android:gravity="center"
-            android:layout_marginBottom="8dp" />
+            android:layout_marginBottom="16dp" />
 
         <Spinner
             android:id="@+id/language_spinner"
@@ -153,8 +202,9 @@
             android:layout_height="wrap_content"
             android:entries="@array/languages_array"
             android:prompt="@string/language_prompt"
-            android:layout_marginBottom="24dp" />
+            android:layout_marginBottom="32dp" />
 
+        <!-- Save Button -->
         <Button
             android:id="@+id/save_button"
             android:layout_width="match_parent"
@@ -162,7 +212,8 @@
             android:text="@string/save_settings"
             android:backgroundTint="#2196F3"
             android:textColor="#FFFFFF"
-            android:textSize="16sp" />
+            android:textSize="16sp"
+            android:layout_marginTop="16dp" />
 
     </LinearLayout>
 </ScrollView>
