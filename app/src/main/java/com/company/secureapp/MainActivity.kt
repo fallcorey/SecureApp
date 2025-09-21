@@ -5,7 +5,6 @@ import android.os.Bundle
 import android.os.CountDownTimer
 import android.os.Handler
 import android.os.Looper
-import android.view.KeyEvent
 import android.widget.Button
 import android.widget.TextView
 import android.widget.Toast
@@ -21,8 +20,6 @@ class MainActivity : BaseActivity() {
     private lateinit var audioRecorder: AudioRecorderHelper
     private lateinit var locationHelper: LocationHelper
     private lateinit var networkHelper: NetworkHelper
-    private lateinit var emailHelper: EmailHelper
-    private lateinit var volumeKeyHelper: VolumeKeyHelper
     private val SMS_PERMISSION_CODE = 1001
     
     private lateinit var sosButton: Button
@@ -42,18 +39,6 @@ class MainActivity : BaseActivity() {
         audioRecorder = AudioRecorderHelper(this)
         locationHelper = LocationHelper(this)
         networkHelper = NetworkHelper(this)
-        emailHelper = EmailHelper(this)
-
-        // Инициализация VolumeKeyHelper
-        volumeKeyHelper = VolumeKeyHelper(this) {
-            if (!isEmergencyActive) {
-                if (checkAllPermissions()) {
-                    startCountdown()
-                } else {
-                    requestAllPermissions()
-                }
-            }
-        }
 
         // Находим элементы
         sosButton = findViewById(R.id.sos_button)
@@ -67,20 +52,6 @@ class MainActivity : BaseActivity() {
 
         // Обработка intent от виджета
         handleWidgetIntent()
-
-        // Callback для завершения записи аудио
-        audioRecorder.onRecordingComplete = { file ->
-            Log.d("AudioRecord", "Recording completed: ${file.absolutePath}")
-            Log.d("AudioRecord", "File size: ${audioRecorder.getRecordedFileSizeFormatted()}")
-            
-            // Отправляем аудиофайл на email
-            sendAudioToEmail(file)
-        }
-
-        audioRecorder.onRecordingError = { error ->
-            Log.e("AudioRecord", "Recording error: $error")
-            showToast("Audio recording error: $error")
-        }
 
         sosButton.setOnClickListener {
             if (isEmergencyActive) {
@@ -100,22 +71,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    override fun onResume() {
-        super.onResume()
-        volumeKeyHelper.startListening()
-    }
-
-    override fun onPause() {
-        super.onPause()
-        volumeKeyHelper.stopListening()
-    }
-
-    override fun onNewIntent(intent: Intent?) {
-        super.onNewIntent(intent)
-        setIntent(intent)
-        handleWidgetIntent()
-    }
-
     // Обработка intent от виджета
     private fun handleWidgetIntent() {
         if (intent?.action == "ACTION_TRIGGER_SOS") {
@@ -129,15 +84,10 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // Перехват физических кнопок
-    override fun onKeyDown(keyCode: Int, event: KeyEvent?): Boolean {
-        when (keyCode) {
-            KeyEvent.KEYCODE_VOLUME_UP, KeyEvent.KEYCODE_VOLUME_DOWN -> {
-                volumeKeyHelper.simulateVolumePress()
-                return true
-            }
-        }
-        return super.onKeyDown(keyCode, event)
+    override fun onNewIntent(intent: Intent?) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        handleWidgetIntent()
     }
 
     // Таймер обратного отсчета 3 секунды
@@ -173,7 +123,7 @@ class MainActivity : BaseActivity() {
 
     // Сброс UI к исходному состоянию
     private fun resetUI() {
-        sosButton.text = getString(R.string.sos_button)
+        sosButton.text = "SOS"
         sosButton.setBackgroundResource(R.drawable.sos_button_background)
         timerText.visibility = View.GONE
         statusText.visibility = View.GONE
@@ -200,13 +150,14 @@ class MainActivity : BaseActivity() {
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            // Начинаем запись звука с указанным временем
+            // Начинаем запись звука
             var isRecording = false
-            if (audioRecorder.startRecording(recordingTime)) {
+            if (audioRecorder.startRecording()) {
                 isRecording = true
+                handler.postDelayed({ stopRecording() }, recordingTime)
             }
 
-            // Формируем сообщение с информацией о времени записи
+            // Формируем сообщение
             val recordingDuration = when (recordingTime) {
                 30000L -> "30 seconds"
                 60000L -> "1 minute"
@@ -242,26 +193,6 @@ class MainActivity : BaseActivity() {
             statusText.text = "Error occurred"
             showToast("Error: ${e.message}")
             resetUI()
-        }
-    }
-
-    // Отправка аудио на email
-    private fun sendAudioToEmail(audioFile: File) {
-        val savedEmail = preferenceHelper.getString("email_address", "")
-        val savedUserName = preferenceHelper.getString("user_name", "User")
-        
-        if (savedEmail.isNotBlank() && audioFile.exists()) {
-            showToast(getString(R.string.sending_audio))
-            
-            // Используем EmailHelper для отправки
-            val emailSent = emailHelper.sendAudioFile(savedEmail, audioFile, savedUserName)
-            
-            if (emailSent) {
-                Log.d("Email", "Audio file sent to $savedEmail")
-                showToast(getString(R.string.audio_sent))
-            }
-        } else {
-            Log.d("Email", "Email not configured or audio file missing")
         }
     }
 
