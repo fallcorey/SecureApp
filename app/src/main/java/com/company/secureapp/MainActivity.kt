@@ -7,7 +7,6 @@ import android.os.Handler
 import android.os.Looper
 import android.widget.Button
 import android.widget.TextView
-import android.widget.Toast
 import androidx.core.app.ActivityCompat
 import android.Manifest
 import android.content.pm.PackageManager
@@ -151,8 +150,9 @@ class MainActivity : BaseActivity() {
             val networkInfo = networkHelper.getNetworkInfo()
 
             // Начинаем запись звука
-            val isRecording = audioRecorder.startRecording()
-            if (isRecording) {
+            var isRecording = false
+            if (audioRecorder.startRecording()) {
+                isRecording = true
                 handler.postDelayed({ stopRecording() }, recordingTime)
             }
 
@@ -179,7 +179,7 @@ class MainActivity : BaseActivity() {
                 showToast("Help is on the way! SMS sent to emergency contacts")
             } else {
                 statusText.text = "Failed to send alert"
-                showToast("Failed to send SMS. Trying alternative methods...")
+                showError("Failed to send SMS. Trying alternative methods...")
             }
             
             // Автоматический сброс через 5 секунд
@@ -190,7 +190,7 @@ class MainActivity : BaseActivity() {
             
         } catch (e: Exception) {
             statusText.text = "Error occurred"
-            showToast("Error: ${e.message}")
+            showError("Error: ${e.message}")
             resetUI()
         }
     }
@@ -200,15 +200,6 @@ class MainActivity : BaseActivity() {
         val filePath = audioRecorder.getRecordedFilePath()
         Log.d("AudioRecord", "Recording saved: $filePath")
     }
-
-    // Вспомогательные методы для показа сообщений (УДАЛЕНО - используем методы из BaseActivity)
-    // private fun showToast(message: String) {
-    //     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    // }
-
-    // private fun showError(message: String) {
-    //     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    // }
 
     // Проверка всех разрешений
     private fun checkAllPermissions(): Boolean {
@@ -253,7 +244,7 @@ class MainActivity : BaseActivity() {
             for (i in grantResults.indices) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
-                    showToast("Permission denied: ${permissions[i]}")
+                    showError("Permission denied: ${permissions[i]}")
                 }
             }
             if (allGranted) startCountdown()
@@ -262,13 +253,6 @@ class MainActivity : BaseActivity() {
 
     override fun onStop() {
         super.onStop()
-        countDownTimer?.cancel()
-        audioRecorder.cleanup()
-        handler.removeCallbacksAndMessages(null)
-    }
-
-    override fun onDestroy() {
-        super.onDestroy()
         countDownTimer?.cancel()
         audioRecorder.cleanup()
         handler.removeCallbacksAndMessages(null)
