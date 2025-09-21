@@ -1,7 +1,11 @@
 <?xml version="1.0" encoding="utf-8"?>
-<manifest xmlns:android="http://schemas.android.com/apk/res/android">
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools">
 
-    <!-- Добавьте эти разрешения -->
+    <!-- Добавляем разрешение для виджета -->
+    <uses-permission android:name="android.permission.BIND_APPWIDGET" />
+    
+    <!-- Существующие разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
     <uses-permission android:name="android.permission.ACCESS_COARSE_LOCATION" />
@@ -11,26 +15,16 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.BIND_APPWIDGET" />
     
     <application
         android:allowBackup="true"
         android:label="@string/app_name"
         android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
         android:icon="@mipmap/ic_launcher"
-        android:roundIcon="@mipmap/ic_launcher_round">
+        android:roundIcon="@mipmap/ic_launcher_round"
+        tools:targetApi="31">
 
-        <receiver
-            android:name=".SosAppWidget"
-            android:exported="true">
-            <intent-filter>
-                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
-            </intent-filter>
-            <meta-data
-            android:name="android.appwidget.provider"
-            android:resource="@xml/sos_widget_info" />
-        </receiver>
-        
+        <!-- Главная активность -->
         <activity
             android:name=".MainActivity"
             android:exported="true"
@@ -39,12 +33,39 @@
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
+            
+            <!-- Intent фильтр для обработки активации от виджета -->
+            <intent-filter>
+                <action android:name="ACTION_TRIGGER_SOS" />
+                <category android:name="android.intent.category.DEFAULT" />
+            </intent-filter>
         </activity>
         
+        <!-- Активность настроек -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
             
+        <!-- Ресивер для виджета -->
+        <receiver
+            android:name=".SosAppWidget"
+            android:exported="true">
+            <intent-filter>
+                <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
+            </intent-filter>
+            <meta-data
+                android:name="android.appwidget.provider"
+                android:resource="@xml/sos_widget_info" />
+        </receiver>
+        
+        <!-- Сервисы для работы с аудио и местоположением (если будут добавляться) -->
+        <!--
+        <service
+            android:name=".AudioRecordingService"
+            android:enabled="true"
+            android:exported="false" />
+        -->
+        
     </application>
 
 </manifest>
