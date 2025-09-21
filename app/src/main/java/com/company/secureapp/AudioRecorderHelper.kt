@@ -7,92 +7,127 @@ import android.util.Log
 import java.io.File
 import java.io.IOException
 import java.text.SimpleDateFormat
-import java.util.*
+import java.util.Date
+import java.util.Locale
 
 class AudioRecorderHelper(private val context: Context) {
 
     private var mediaRecorder: MediaRecorder? = null
-    private var currentFile: File? = null
-    private val TAG = "AudioRecorder"
+    private var currentFilePath: String? = null
+    private var isRecording = false
 
-    // Начать запись
     fun startRecording(): Boolean {
+        if (isRecording) {
+            Log.d("AudioRecorder", "Already recording, stopping first")
+            stopRecording()
+        }
+
         try {
-            stopRecording() // Останавливаем предыдущую запись
+            // Создаем папку Security_app в external files directory
+            val audioDir = File(context.getExternalFilesDir(null), "Security_app")
+            if (!audioDir.exists()) {
+                val created = audioDir.mkdirs()
+                Log.d("AudioRecorder", "Directory created: $created, path: ${audioDir.absolutePath}")
+            }
+
+            // Генерируем имя файла с timestamp
+            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
+            val audioFile = File(audioDir, "emergency_$timeStamp.3gp")
+            currentFilePath = audioFile.absolutePath
+
+            Log.d("AudioRecorder", "Starting recording to: ${audioFile.absolutePath}")
 
             mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                setAudioSamplingRate(44100)
-                setAudioChannels(1)
-                setOutputFile(createAudioFile()?.absolutePath)
-                prepare()
-                start()
+                setOutputFormat(MediaRecorder.OutputFormat.THREE_GPP)
+                setAudioEncoder(MediaRecorder.AudioEncoder.AMR_NB)
+                setOutputFile(audioFile.absolutePath)
+                
+                try {
+                    prepare()
+                    start()
+                    isRecording = true
+                    Log.d("AudioRecorder", "Recording started successfully")
+                    return true
+                } catch (e: IllegalStateException) {
+                    Log.e("AudioRecorder", "IllegalStateException: ${e.message}")
+                    e.printStackTrace()
+                    release()
+                    return false
+                } catch (e: IOException) {
+                    Log.e("AudioRecorder", "IOException: ${e.message}")
+                    e.printStackTrace()
+                    release()
+                    return false
+                } catch (e: Exception) {
+                    Log.e("AudioRecorder", "Exception: ${e.message}")
+                    e.printStackTrace()
+                    release()
+                    return false
+                }
             }
-
-            Log.d(TAG, "Recording started successfully")
-            return true
-
-        } catch (e: IOException) {
-            Log.e(TAG, "Recording failed: ${e.message}")
-            return false
-        } catch (e: IllegalStateException) {
-            Log.e(TAG, "Recording failed: ${e.message}")
+            
+        } catch (e: Exception) {
+            Log.e("AudioRecorder", "General exception: ${e.message}")
+            e.printStackTrace()
             return false
         }
     }
 
-    // Остановить запись
-    fun stopRecording() {
-        mediaRecorder?.apply {
-            try {
-                stop()
-            } catch (e: IllegalStateException) {
-                Log.e(TAG, "Stop failed: ${e.message}")
-            } finally {
-                release()
-            }
-        }
-        mediaRecorder = null
-    }
-
-    // Создать файл для записи
-    private fun createAudioFile(): File? {
+    fun stopRecording(): Boolean {
         return try {
-            val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
-            val storageDir = context.getExternalFilesDir(Environment.DIRECTORY_MUSIC)
-            
-            if (storageDir != null && !storageDir.exists()) {
-                storageDir.mkdirs()
+            if (isRecording && mediaRecorder != null) {
+                Log.d("AudioRecorder", "Stopping recording")
+                mediaRecorder?.apply {
+                    try {
+                        stop()
+                    } catch (e: Exception) {
+                        Log.e("AudioRecorder", "Error stopping: ${e.message}")
+                    }
+                    release()
+                }
+                mediaRecorder = null
+                isRecording = false
+                Log.d("AudioRecorder", "Recording stopped successfully")
+                true
+            } else {
+                Log.d("AudioRecorder", "Not recording or mediaRecorder is null")
+                false
             }
-            
-            File.createTempFile(
-                "emergency_${timeStamp}_",
-                ".mp3",
-                storageDir
-            ).apply {
-                currentFile = this
-                Log.d(TAG, "Audio file created: $absolutePath")
-            }
-        } catch (e: IOException) {
-            Log.e(TAG, "File creation failed: ${e.message}")
-            null
+        } catch (e: Exception) {
+            Log.e("AudioRecorder", "Exception in stopRecording: ${e.message}")
+            e.printStackTrace()
+            false
         }
     }
 
-    // Получить путь к записанному файлу
-    fun getRecordedFilePath(): String {
-        return currentFile?.absolutePath ?: "No file recorded"
+    fun getRecordedFilePath(): String? {
+        return currentFilePath
     }
 
-    // Проверить идет ли запись
-    fun isRecording(): Boolean = mediaRecorder != null
+    fun isRecording(): Boolean {
+        return isRecording
+    }
 
-    // Очистка ресурсов
     fun cleanup() {
+        Log.d("AudioRecorder", "Cleaning up")
         stopRecording()
-        currentFile?.delete()
-        currentFile = null
+    }
+
+    fun getRecordingStatus(): String {
+        return if (isRecording) "Recording active" else "Not recording"
+    }
+
+    fun getRecordingsDirectory(): File {
+        return File(context.getExternalFilesDir(null), "Security_app")
+    }
+
+    fun getAllRecordings(): List<File> {
+        val dir = getRecordingsDirectory()
+        return if (dir.exists() && dir.isDirectory) {
+            dir.listFiles()?.filter { it.isFile && it.name.endsWith(".3gp") } ?: emptyList()
+        } else {
+            emptyList()
+        }
     }
 }
