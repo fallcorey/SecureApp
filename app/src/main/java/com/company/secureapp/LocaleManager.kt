@@ -36,13 +36,15 @@ object LocaleManager {
     }
 
     fun getCurrentLanguage(context: Context): String {
+        // Используем тот же ключ, что и в SettingsActivity
         val preferences = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
-        return preferences.getString("selected_language", "en") ?: "en"
+        return preferences.getString("app_language", "en") ?: "en"
     }
 
     fun saveLanguage(context: Context, languageCode: String) {
+        // Используем тот же ключ, что и в SettingsActivity
         val preferences = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
-        preferences.edit().putString("selected_language", languageCode).apply()
+        preferences.edit().putString("app_language", languageCode).apply()
     }
 
     // Метод для принудительного обновления языка
