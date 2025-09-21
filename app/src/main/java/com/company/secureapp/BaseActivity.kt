@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.company.secureapp.utils.LocaleManager
+import com.fallcorey.secureapp.utils.LocaleManager
 
 open class BaseActivity : AppCompatActivity() {
 
@@ -21,11 +21,12 @@ open class BaseActivity : AppCompatActivity() {
 
     fun changeLanguage(languageCode: String) {
         LocaleManager.saveLanguage(this, languageCode)
-        // Немедленно применяем изменения языка
-        LocaleManager.updateLanguage(this, languageCode)
         
-        // Обновляем контент активности
-        recreate()
+        // Полностью перезапускаем приложение для применения языка
+        val intent = Intent(this, MainActivity::class.java)
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_CLEAR_TASK or Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+        finishAffinity()
     }
 
     // Вспомогательные методы для Toast
@@ -37,12 +38,7 @@ open class BaseActivity : AppCompatActivity() {
         Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
     }
 
-    // Добавлен метод showError для совместимости
     protected fun showError(message: String) {
         Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    protected fun showError(stringResId: Int) {
-        Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
     }
 }
