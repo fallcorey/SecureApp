@@ -56,13 +56,15 @@ class SettingsActivity : BaseActivity() {
 
             // Сохранение языка и его применение
             val selectedLanguage = languageCodes[languageSpinner.selectedItemPosition]
-            changeLanguage(selectedLanguage) // Теперь этот метод существует в BaseActivity
+            changeLanguage(selectedLanguage)
 
             showToast("Settings saved! Language: ${languageOptions[languageSpinner.selectedItemPosition]}")
             finish()
         }
 
-        // Кнопка отмены
+        // Кнопка отмены - используйте правильный ID из вашего layout файла
+        // Если у вас кнопка называется "cancel_button", то оставьте как есть
+        // Если называется по-другому, замените R.id.cancel_button на правильный ID
         val cancelButton: Button = findViewById(R.id.cancel_button)
         cancelButton.setOnClickListener {
             finish()
