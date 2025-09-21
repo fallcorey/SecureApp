@@ -1,7 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string-array name="languages_array">
-        <item>Русский</item>
         <item>English</item>
+        <item>Русский</item>
+    </string-array>
+
+    <string-array name="recording_time_array">
+        <item>30 seconds</item>
+        <item>1 minute</item>
+        <item>2 minutes</item>
+        <item>5 minutes</item>
+    </string-array>
+
+    <string-array name="recording_time_values">
+        <item>30000</item>
+        <item>60000</item>
+        <item>120000</item>
+        <item>300000</item>
     </string-array>
 </resources>
