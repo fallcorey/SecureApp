@@ -46,18 +46,30 @@ class SettingsActivity : BaseActivity() {
 
         // Загружаем сохраненный язык
         currentLanguage = preferenceHelper.getString("app_language", "en")
-        languageSpinner.setSelection(if (currentLanguage == "ru") 1 else 0)
+        
+        // Устанавливаем правильную позицию в Spinner
+        val position = when (currentLanguage) {
+            "en" -> 0 // English на позиции 0
+            "ru" -> 1 // Русский на позиции 1
+            else -> 0
+        }
+        languageSpinner.setSelection(position)
 
         // Обработчик выбора языка
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
-                val selectedLanguage = if (position == 1) "ru" else "en"
+                val selectedLanguage = when (position) {
+                    0 -> "en" // English
+                    1 -> "ru" // Русский
+                    else -> "en"
+                }
                 
                 if (selectedLanguage != currentLanguage) {
                     // Меняем язык сразу при выборе
                     preferenceHelper.saveString("app_language", selectedLanguage)
                     changeLanguage(selectedLanguage)
                     languageChanged = true
+                    currentLanguage = selectedLanguage // Обновляем текущий язык
                 }
             }
 
@@ -89,14 +101,8 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
 
-                if (languageChanged) {
-                    showToast(R.string.settings_saved)
-                    // Закрываем активность после смены языка
-                    finish()
-                } else {
-                    showToast(R.string.settings_saved)
-                    finish()
-                }
+                showToast(R.string.settings_saved)
+                finish()
                 
             } catch (e: Exception) {
                 showToast("Save error: ${e.message}")
