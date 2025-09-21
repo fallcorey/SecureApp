@@ -32,4 +32,14 @@ open class BaseActivity : AppCompatActivity() {
     protected fun showError(stringResId: Int) {
         Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
     }
+
+    // Добавляем метод changeLanguage
+    fun changeLanguage(languageCode: String) {
+        // Сохраняем выбранный язык в SharedPreferences
+        val preferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        preferences.edit().putString("selected_language", languageCode).apply()
+        
+        // Перезагружаем активность для применения языка
+        recreate()
+    }
 }
