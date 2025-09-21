@@ -11,45 +11,6 @@
         android:gravity="center"
         android:layout_gravity="center_vertical">
 
-        <!-- Language Settings -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/language_settings"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
-
-        <LinearLayout
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:orientation="horizontal"
-            android:gravity="center"
-            android:layout_marginBottom="24dp">
-
-            <Button
-                android:id="@+id/lang_eng_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginEnd="8dp"
-                android:text="@string/english"
-                android:backgroundTint="#2196F3"
-                android:textColor="#FFFFFF" />
-
-            <Button
-                android:id="@+id/lang_ru_button"
-                android:layout_width="0dp"
-                android:layout_height="wrap_content"
-                android:layout_weight="1"
-                android:layout_marginStart="8dp"
-                android:text="@string/russian"
-                android:backgroundTint="#2196F3"
-                android:textColor="#FFFFFF" />
-
-        </LinearLayout>
-
         <!-- Server Settings -->
         <TextView
             android:layout_width="match_parent"
@@ -143,6 +104,24 @@
             android:hint="@string/phone_hint"
             android:inputType="phone"
             android:layout_marginBottom="24dp" />
+
+        <!-- Language Settings -->
+        <TextView
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:text="@string/language_settings"
+            android:textSize="18sp"
+            android:textStyle="bold"
+            android:gravity="center"
+            android:layout_marginBottom="8dp" />
+
+        <Spinner
+            android:id="@+id/language_spinner"
+            android:layout_width="match_parent"
+            android:layout_height="wrap_content"
+            android:layout_marginBottom="24dp"
+            android:entries="@array/languages_array"
+            android:prompt="@string/language_prompt" />
 
         <Button
             android:id="@+id/save_button"
