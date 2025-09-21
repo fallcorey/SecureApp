@@ -120,6 +120,9 @@ class MainActivity : BaseActivity() {
                 return
             }
 
+             // Получаем настройку времени записи
+            val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
+            
             // Получаем локацию
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
