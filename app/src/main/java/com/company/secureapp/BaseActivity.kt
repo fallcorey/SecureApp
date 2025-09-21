@@ -5,7 +5,7 @@ import android.content.Intent
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import com.fallcorey.secureapp.utils.LocaleManager
+import com.company.secureapp.utils.LocaleManager
 
 open class BaseActivity : AppCompatActivity() {
 
@@ -34,6 +34,15 @@ open class BaseActivity : AppCompatActivity() {
     }
 
     protected fun showToast(stringResId: Int) {
+        Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
+    }
+
+    // Добавлен метод showError для совместимости
+    protected fun showError(message: String) {
+        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    }
+
+    protected fun showError(stringResId: Int) {
         Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
     }
 }
