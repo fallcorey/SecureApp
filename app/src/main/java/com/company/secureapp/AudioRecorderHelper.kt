@@ -161,7 +161,6 @@ class AudioRecorderHelper(private val context: Context) {
         return mediaRecorder?.let {
             try {
                 // Для MediaRecorder нет прямого метода получения текущего времени записи
-                // Возвращаем 0, так как эта информация не доступна напрямую
                 0L
             } catch (e: Exception) {
                 0L
