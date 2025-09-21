@@ -24,4 +24,11 @@
     <string name="settings_saved">Настройки успешно сохранены!</string>
     <string name="language_prompt">Выберите язык</string>
     <string name="language_changed">Язык изменен</string>
+    
+    <!-- Recording Settings -->
+    <string name="recording_settings">Настройки записи</string>
+    <string name="recording_time">Длительность записи</string>
+    <string name="recording_time_summary">Установите длительность аудиозаписи после активации SOS</string>
+    <string name="seconds">секунд</string>
+    <string name="minutes">минут</string>
 </resources>
