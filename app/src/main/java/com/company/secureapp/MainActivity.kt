@@ -76,41 +76,6 @@ class MainActivity : BaseActivity() {
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
         }
-
-        // Тестовая кнопка для записи (можно удалить после тестирования)
-        val testButton = findViewById<Button>(R.id.test_button)
-        testButton?.setOnClickListener {
-            testAudioRecording()
-        }
-    }
-
-    private fun testAudioRecording() {
-        Log.d("MainActivity", "Testing audio recording")
-        if (checkAudioPermission() && checkStoragePermission()) {
-            val started = audioRecorder.startRecording()
-            showToast("Recording test: ${if (started) "STARTED" else "FAILED"}")
-            Log.d("MainActivity", "Recording test started: $started")
-            
-            handler.postDelayed({
-                val stopped = audioRecorder.stopRecording()
-                val filePath = audioRecorder.getRecordedFilePath()
-                val message = "Recording test: ${if (stopped) "STOPPED" else "FAILED"}\nFile: $filePath"
-                showToast(message)
-                Log.d("MainActivity", message)
-                
-                if (filePath != null) {
-                    val file = File(filePath)
-                    if (file.exists()) {
-                        Log.d("MainActivity", "File exists, size: ${file.length()} bytes")
-                    } else {
-                        Log.d("MainActivity", "File does not exist")
-                    }
-                }
-            }, 3000)
-        } else {
-            showToast("Need permissions for audio test")
-            requestAllPermissions()
-        }
     }
 
     // Обработка intent от виджета
@@ -246,10 +211,8 @@ class MainActivity : BaseActivity() {
                         if (file.exists()) {
                             val fileSize = file.length()
                             Log.d("MainActivity", "Recording saved: ${file.name}, size: $fileSize bytes")
-                            showToast("Recording saved: ${file.name} ($fileSize bytes)")
                         } else {
                             Log.d("MainActivity", "Recording file does not exist")
-                            showToast("Recording failed to save")
                         }
                     }
                 }, recordingTime)
