@@ -108,62 +108,71 @@ class MainActivity : BaseActivity() {
 
     // Основная процедура экстренного оповещения
     private fun startEmergencyProcedure() {
-        statusText.text = "Sending emergency alert..."
+    statusText.text = "Sending emergency alert..."
+    
+    try {
+        val savedSmsNumber = preferenceHelper.getString("sms_number", "")
+        val savedUserName = preferenceHelper.getString("user_name", "User")
         
-        try {
-            val savedSmsNumber = preferenceHelper.getString("sms_number", "")
-            val savedUserName = preferenceHelper.getString("user_name", "User")
-            
-            if (savedSmsNumber.isBlank()) {
-                showToast("Please set SMS number in settings")
-                resetUI()
-                return
-            }
-
-             // Получаем настройку времени записи
-            val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
-            
-            // Получаем локацию
-            val locationInfo = locationHelper.getLocationString()
-            val networkInfo = networkHelper.getNetworkInfo()
-
-            // Начинаем запись звука
-            var isRecording = false
-            if (audioRecorder.startRecording()) {
-                isRecording = true
-                handler.postDelayed({ stopRecording() }, 30000)
-            }
-
-            // Формируем сообщение
-            val message = "EMERGENCY from $savedUserName!\n" +
-                         "Need immediate assistance!\n" +
-                         "$locationInfo\n" +
-                         "Network: $networkInfo\n" +
-                         if (isRecording) "Audio recording active" else ""
-
-            // Отправляем SMS
-            val smsSent = networkHelper.sendSms(savedSmsNumber, message)
-            
-            if (smsSent) {
-                statusText.text = "Emergency alert sent!"
-                showToast("Help is on the way! SMS sent to emergency contacts")
-            } else {
-                statusText.text = "Failed to send alert"
-                showToast("Failed to send SMS. Trying alternative methods...")
-            }
-            
-            // Автоматический сброс через 5 секунд
-            handler.postDelayed({
-                resetUI()
-                isEmergencyActive = false
-            }, 5000)
-            
-        } catch (e: Exception) {
-            statusText.text = "Error occurred"
-            showToast("Error: ${e.message}")
+        if (savedSmsNumber.isBlank()) {
+            showToast("Please set SMS number in settings")
             resetUI()
+            return
         }
+
+        // Получаем настройку времени записи
+        val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
+
+        // Получаем локацию
+        val locationInfo = locationHelper.getLocationString()
+        val networkInfo = networkHelper.getNetworkInfo()
+
+        // Начинаем запись звука
+        var isRecording = false
+        if (audioRecorder.startRecording()) {
+            isRecording = true
+            // Используем сохраненное время записи
+            handler.postDelayed({ stopRecording() }, recordingTime)
+        }
+
+        // Формируем сообщение с информацией о времени записи
+        val recordingDuration = when (recordingTime) {
+            30000L -> "30 seconds"
+            60000L -> "1 minute"
+            120000L -> "2 minutes"
+            300000L -> "5 minutes"
+            else -> "${recordingTime / 1000} seconds"
+        }
+
+        val message = "EMERGENCY from $savedUserName!\n" +
+                     "Need immediate assistance!\n" +
+                     "$locationInfo\n" +
+                     "Network: $networkInfo\n" +
+                     if (isRecording) "Audio recording active ($recordingDuration)" else ""
+
+        // Отправляем SMS
+        val smsSent = networkHelper.sendSms(savedSmsNumber, message)
+        
+        if (smsSent) {
+            statusText.text = "Emergency alert sent!"
+            showToast("Help is on the way! SMS sent to emergency contacts")
+        } else {
+            statusText.text = "Failed to send alert"
+            showToast("Failed to send SMS. Trying alternative methods...")
+        }
+        
+        // Автоматический сброс через 5 секунд
+        handler.postDelayed({
+            resetUI()
+            isEmergencyActive = false
+        }, 5000)
+        
+    } catch (e: Exception) {
+        statusText.text = "Error occurred"
+        showToast("Error: ${e.message}")
+        resetUI()
     }
+}
 
     private fun stopRecording() {
         audioRecorder.stopRecording()
