@@ -23,4 +23,5 @@
     <string name="save_settings">Сохранить настройки</string>
     <string name="settings_saved">Настройки успешно сохранены!</string>
     <string name="language_prompt">Выберите язык</string>
+    <string name="language_changed">Язык изменен</string>
 </resources>
