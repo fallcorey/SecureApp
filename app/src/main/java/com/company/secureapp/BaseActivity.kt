@@ -24,7 +24,7 @@ open class BaseActivity : AppCompatActivity() {
         // Немедленно применяем изменения языка
         LocaleManager.updateLanguage(this, languageCode)
         
-        // Перезапускаем активность для применения изменений
+        // Обновляем контент активности
         recreate()
     }
 
