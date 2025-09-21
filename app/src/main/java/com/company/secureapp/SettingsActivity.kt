@@ -10,6 +10,7 @@ class SettingsActivity : BaseActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var languageSpinner: Spinner
+    private var currentLanguage: String = "en"
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -40,8 +41,8 @@ class SettingsActivity : BaseActivity() {
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
 
         // Загружаем сохраненный язык
-        val savedLanguage = preferenceHelper.getString("app_language", "en")
-        languageSpinner.setSelection(if (savedLanguage == "ru") 1 else 0)
+        currentLanguage = preferenceHelper.getString("app_language", "en")
+        languageSpinner.setSelection(if (currentLanguage == "ru") 1 else 0)
 
         saveButton.setOnClickListener {
             val serverUrlText = serverUrl.text.toString().trim()
@@ -73,7 +74,7 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("app_language", selectedLanguage)
 
                 // Применяем язык если он изменился
-                if (savedLanguage != selectedLanguage) {
+                if (currentLanguage != selectedLanguage) {
                     changeLanguage(selectedLanguage)
                 } else {
                     showToast(R.string.settings_saved)
