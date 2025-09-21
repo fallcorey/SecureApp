@@ -1,19 +1,19 @@
-package com.company.secureapp
+package com.fallcorey.secureapp.utils
 
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
 import android.os.Build
-import java.util.Locale
+import java.util.*
 
 object LocaleManager {
 
-    fun setLocale(context: Context, language: String): Context {
-        return updateResources(context, language)
+    fun setLocale(context: Context, languageCode: String): Context {
+        return updateResources(context, languageCode)
     }
 
-    fun updateResources(context: Context, language: String): Context {
-        val locale = Locale(language)
+    private fun updateResources(context: Context, languageCode: String): Context {
+        val locale = Locale(languageCode)
         Locale.setDefault(locale)
 
         val resources: Resources = context.resources
@@ -21,6 +21,7 @@ object LocaleManager {
 
         if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
             configuration.setLocale(locale)
+            configuration.setLayoutDirection(locale)
         } else {
             configuration.locale = locale
         }
@@ -35,12 +36,32 @@ object LocaleManager {
     }
 
     fun getCurrentLanguage(context: Context): String {
-        val preferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        return preferences.getString("selected_language", "en") ?: "en"
+        // Используем тот же ключ, что и в SettingsActivity
+        val preferences = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+        return preferences.getString("app_language", "en") ?: "en"
     }
 
-    fun saveLanguage(context: Context, language: String) {
-        val preferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        preferences.edit().putString("selected_language", language).apply()
+    fun saveLanguage(context: Context, languageCode: String) {
+        // Используем тот же ключ, что и в SettingsActivity
+        val preferences = context.getSharedPreferences("AppSettings", Context.MODE_PRIVATE)
+        preferences.edit().putString("app_language", languageCode).apply()
+    }
+
+    // Метод для принудительного обновления языка
+    fun updateLanguage(context: Context, languageCode: String) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+
+        val resources: Resources = context.resources
+        val configuration: Configuration = resources.configuration
+
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            configuration.setLocale(locale)
+            configuration.setLayoutDirection(locale)
+        } else {
+            configuration.locale = locale
+        }
+
+        resources.updateConfiguration(configuration, resources.displayMetrics)
     }
 }
