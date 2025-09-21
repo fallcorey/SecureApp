@@ -3,16 +3,12 @@
     <string name="app_name">SecureApp</string>
     <string name="sos_button">SOS</string>
     <string name="settings_button">Настройки</string>
-    <string name="english_button">Английский</string>
-    <string name="russian_button">Русский</string>
     <string name="emergency_cancelled">Тревога отменена</string>
     <string name="release_to_cancel">Отпустите для отмены тревоги</string>
     <string name="sending_in">Отправка через: %s</string>
     
     <!-- Settings Activity Strings -->
     <string name="language_settings">Настройки языка</string>
-    <string name="english">Английский</string>
-    <string name="russian">Русский</string>
     <string name="server_settings">Настройки сервера</string>
     <string name="server_url_hint">URL сервера</string>
     <string name="auth_token_hint">Токен авторизации</string>
@@ -25,8 +21,6 @@
     <string name="full_name_hint">Полное имя</string>
     <string name="phone_hint">Номер телефона</string>
     <string name="save_settings">Сохранить настройки</string>
-    
-    <!-- Новые строки для Toast сообщений -->
     <string name="settings_saved">Настройки успешно сохранены!</string>
-    <string name="language_changed">Язык изменен. Перезапуск приложения...</string>
+    <string name="language_prompt">Выберите язык</string>
 </resources>
