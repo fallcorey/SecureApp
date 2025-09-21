@@ -1,12 +1,15 @@
 package com.company.secureapp
 
 import android.os.Bundle
+import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
+import android.widget.Spinner
 
 class SettingsActivity : BaseActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
+    private lateinit var languageSpinner: Spinner
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -15,8 +18,7 @@ class SettingsActivity : BaseActivity() {
         preferenceHelper = SimplePreferenceHelper(this)
 
         val saveButton = findViewById<Button>(R.id.save_button)
-        val langEngButton = findViewById<Button>(R.id.lang_eng_button)
-        val langRuButton = findViewById<Button>(R.id.lang_ru_button)
+        languageSpinner = findViewById<Spinner>(R.id.language_spinner)
         val serverUrl = findViewById<EditText>(R.id.server_url)
         val serverAuthToken = findViewById<EditText>(R.id.server_auth_token)
         val mattermostWebhook = findViewById<EditText>(R.id.mattermost_webhook)
@@ -24,6 +26,9 @@ class SettingsActivity : BaseActivity() {
         val smsNumber = findViewById<EditText>(R.id.sms_number)
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
+
+        // Настраиваем Spinner
+        setupLanguageSpinner()
 
         // Загружаем сохраненные настройки
         serverUrl.setText(preferenceHelper.getString("server_url", ""))
@@ -34,14 +39,9 @@ class SettingsActivity : BaseActivity() {
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
 
-        // Обработчики кнопок языка
-        langEngButton.setOnClickListener { 
-            changeLanguage("en")
-        }
-        
-        langRuButton.setOnClickListener { 
-            changeLanguage("ru")
-        }
+        // Загружаем сохраненный язык
+        val savedLanguage = preferenceHelper.getString("app_language", "en")
+        languageSpinner.setSelection(if (savedLanguage == "ru") 1 else 0)
 
         saveButton.setOnClickListener {
             val serverUrlText = serverUrl.text.toString().trim()
@@ -67,13 +67,33 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("sms_number", smsNumberText)
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
-                
-                showToast(R.string.settings_saved)
-                finish()
+
+                // Сохраняем выбранный язык
+                val selectedLanguage = if (languageSpinner.selectedItemPosition == 1) "ru" else "en"
+                preferenceHelper.saveString("app_language", selectedLanguage)
+
+                // Применяем язык если он изменился
+                if (savedLanguage != selectedLanguage) {
+                    changeLanguage(selectedLanguage)
+                } else {
+                    showToast(R.string.settings_saved)
+                    finish()
+                }
                 
             } catch (e: Exception) {
                 showToast("Save error: ${e.message}")
             }
         }
+    }
+
+    private fun setupLanguageSpinner() {
+        // Создаем адаптер для Spinner
+        val adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.languages_array,
+            android.R.layout.simple_spinner_item
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        languageSpinner.adapter = adapter
     }
 }
