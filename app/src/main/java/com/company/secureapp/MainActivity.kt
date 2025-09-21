@@ -118,7 +118,7 @@ class MainActivity : BaseActivity() {
         isEmergencyActive = false
         countDownTimer?.cancel()
         resetUI()
-        Toast.makeText(this, getString(R.string.emergency_cancelled), Toast.LENGTH_LONG).show()
+        showToast(getString(R.string.emergency_cancelled))
     }
 
     // Сброс UI к исходному состоянию
@@ -151,9 +151,8 @@ class MainActivity : BaseActivity() {
             val networkInfo = networkHelper.getNetworkInfo()
 
             // Начинаем запись звука
-            var isRecording = false
-            if (audioRecorder.startRecording()) {
-                isRecording = true
+            val isRecording = audioRecorder.startRecording()
+            if (isRecording) {
                 handler.postDelayed({ stopRecording() }, recordingTime)
             }
 
@@ -202,14 +201,14 @@ class MainActivity : BaseActivity() {
         Log.d("AudioRecord", "Recording saved: $filePath")
     }
 
-    // Вспомогательные методы для показа сообщений
-    private fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
+    // Вспомогательные методы для показа сообщений (УДАЛЕНО - используем методы из BaseActivity)
+    // private fun showToast(message: String) {
+    //     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    // }
 
-    private fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
+    // private fun showError(message: String) {
+    //     Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+    // }
 
     // Проверка всех разрешений
     private fun checkAllPermissions(): Boolean {
@@ -254,7 +253,7 @@ class MainActivity : BaseActivity() {
             for (i in grantResults.indices) {
                 if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                     allGranted = false
-                    showError("Permission denied: ${permissions[i]}")
+                    showToast("Permission denied: ${permissions[i]}")
                 }
             }
             if (allGranted) startCountdown()
@@ -263,6 +262,13 @@ class MainActivity : BaseActivity() {
 
     override fun onStop() {
         super.onStop()
+        countDownTimer?.cancel()
+        audioRecorder.cleanup()
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         countDownTimer?.cancel()
         audioRecorder.cleanup()
         handler.removeCallbacksAndMessages(null)
