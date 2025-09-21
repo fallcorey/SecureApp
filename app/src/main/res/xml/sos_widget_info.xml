@@ -5,5 +5,4 @@
     android:updatePeriodMillis="0"
     android:initialLayout="@layout/sos_widget"
     android:resizeMode="none"
-    android:widgetCategory="home_screen"
-    android:previewImage="@drawable/ic_widget_preview" />
+    android:widgetCategory="home_screen" />
