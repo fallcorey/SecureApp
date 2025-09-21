@@ -13,6 +13,7 @@ class SettingsActivity : BaseActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
     private lateinit var languageSpinner: Spinner
+    private lateinit var recordingTimeSpinner: Spinner
     private var currentLanguage: String = "en"
     private var languageChanged = false
 
@@ -24,6 +25,7 @@ class SettingsActivity : BaseActivity() {
 
         val saveButton = findViewById<Button>(R.id.save_button)
         languageSpinner = findViewById<Spinner>(R.id.language_spinner)
+        recordingTimeSpinner = findViewById<Spinner>(R.id.recording_time_spinner)
         val serverUrl = findViewById<EditText>(R.id.server_url)
         val serverAuthToken = findViewById<EditText>(R.id.server_auth_token)
         val mattermostWebhook = findViewById<EditText>(R.id.mattermost_webhook)
@@ -32,8 +34,9 @@ class SettingsActivity : BaseActivity() {
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
 
-        // Настраиваем Spinner
+        // Настраиваем Spinner'ы
         setupLanguageSpinner()
+        setupRecordingTimeSpinner()
 
         // Загружаем сохраненные настройки
         serverUrl.setText(preferenceHelper.getString("server_url", ""))
@@ -46,30 +49,33 @@ class SettingsActivity : BaseActivity() {
 
         // Загружаем сохраненный язык
         currentLanguage = preferenceHelper.getString("app_language", "en")
-        
-        // Устанавливаем правильную позицию в Spinner
-        val position = when (currentLanguage) {
-            "en" -> 0 // English на позиции 0
-            "ru" -> 1 // Русский на позиции 1
+        val languagePosition = when (currentLanguage) {
+            "en" -> 0
+            "ru" -> 1
             else -> 0
         }
-        languageSpinner.setSelection(position)
+        languageSpinner.setSelection(languagePosition)
+
+        // Загружаем сохраненное время записи
+        val savedRecordingTime = preferenceHelper.getString("recording_time", "30000")
+        val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
+        val recordingTimePosition = recordingTimeValues.indexOf(savedRecordingTime).coerceAtLeast(0)
+        recordingTimeSpinner.setSelection(recordingTimePosition)
 
         // Обработчик выбора языка
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedLanguage = when (position) {
-                    0 -> "en" // English
-                    1 -> "ru" // Русский
+                    0 -> "en"
+                    1 -> "ru"
                     else -> "en"
                 }
                 
                 if (selectedLanguage != currentLanguage) {
-                    // Меняем язык сразу при выборе
                     preferenceHelper.saveString("app_language", selectedLanguage)
                     changeLanguage(selectedLanguage)
                     languageChanged = true
-                    currentLanguage = selectedLanguage // Обновляем текущий язык
+                    currentLanguage = selectedLanguage
                 }
             }
 
@@ -101,6 +107,11 @@ class SettingsActivity : BaseActivity() {
                 preferenceHelper.saveString("user_name", userNameText)
                 preferenceHelper.saveString("user_phone", userPhoneText)
 
+                // Сохраняем время записи
+                val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
+                val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
+                preferenceHelper.saveString("recording_time", selectedRecordingTime)
+
                 showToast(R.string.settings_saved)
                 finish()
                 
@@ -111,7 +122,6 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun setupLanguageSpinner() {
-        // Создаем адаптер для Spinner
         val adapter = ArrayAdapter.createFromResource(
             this,
             R.array.languages_array,
@@ -121,9 +131,18 @@ class SettingsActivity : BaseActivity() {
         languageSpinner.adapter = adapter
     }
 
+    private fun setupRecordingTimeSpinner() {
+        val adapter = ArrayAdapter.createFromResource(
+            this,
+            R.array.recording_time_array,
+            android.R.layout.simple_spinner_item
+        )
+        adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
+        recordingTimeSpinner.adapter = adapter
+    }
+
     override fun onBackPressed() {
         if (languageChanged) {
-            // При смене языка перезапускаем главный экран
             val intent = Intent(this, MainActivity::class.java)
             intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
             startActivity(intent)
