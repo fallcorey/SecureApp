@@ -30,6 +30,29 @@ class MainActivity : BaseActivity() {
     private var isEmergencyActive = false
     private val handler = Handler(Looper.getMainLooper())
 
+    // === ПЕРЕНЕСИТЕ МЕТОДЫ ПРОВЕРКИ РАЗРЕШЕНИЙ СЮДА (В НАЧАЛО КЛАССА) ===
+    
+    private fun checkSmsPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkAudioPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+               ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkStoragePermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkAllPermissions(): Boolean {
+        return checkSmsPermission() && checkAudioPermission() && checkLocationPermission() && checkStoragePermission()
+    }
+
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
         setContentView(R.layout.activity_main)
@@ -39,9 +62,8 @@ class MainActivity : BaseActivity() {
         locationHelper = LocationHelper(this)
         networkHelper = NetworkHelper(this)
 
-        // === ДОБАВЬТЕ ЭТОТ КОД ДЛЯ ДИАГНОСТИКИ ===
+        // Диагностика записи аудио
         debugAudioRecording()
-        // ==========================================
 
         // Находим элементы
         sosButton = findViewById(R.id.sos_button)
@@ -71,7 +93,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // === ДОБАВЬТЕ ЭТОТ МЕТОД В КЛАСС ===
     private fun debugAudioRecording() {
         Log.d("MainActivity", "=== Audio Recording Debug ===")
         Log.d("MainActivity", "Audio permission: ${checkAudioPermission()}")
@@ -92,12 +113,6 @@ class MainActivity : BaseActivity() {
             Log.e("MainActivity", "Error in debugAudioRecording: ${e.message}")
         }
     }
-
-    // === ДОБАВЬТЕ ЭТОТ МЕТОД ДЛЯ ПРОВЕРКИ ХРАНИЛИЩА ===
-    private fun checkStoragePermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
-    }
-    // ================================================
 
     // Таймер обратного отсчета 3 секунды
     private fun startCountdown() {
@@ -159,18 +174,18 @@ class MainActivity : BaseActivity() {
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            // === ДОБАВЬТЕ ЛОГИРОВАНИЕ ДЛЯ ДИАГНОСТИКИ ===
+            // Логирование для диагностики
             Log.d("MainActivity", "Starting audio recording with time: $recordingTime ms")
             
             // Начинаем запись звука
-            val isRecording = audioRecorder.startRecording() // Убрали var, используем val
+            val isRecording = audioRecorder.startRecording()
             Log.d("MainActivity", "Audio recording started: $isRecording")
             
             if (isRecording) {
                 // Используем сохраненное время записи
                 handler.postDelayed({ 
                     stopRecording() 
-                    // === ДОБАВЬТЕ ПРОВЕРКУ ФАЙЛА ПОСЛЕ ЗАПИСИ ===
+                    // Проверка файла после записи
                     val filePath = audioRecorder.getRecordedFilePath()
                     val file = audioRecorder.getRecordedFile()
                     if (file != null && file.exists()) {
@@ -227,12 +242,7 @@ class MainActivity : BaseActivity() {
         Log.d("MainActivity", "Recording stopped: $stopped")
     }
 
-    // === ОБНОВИТЕ МЕТОД ПРОВЕРКИ РАЗРЕШЕНИЙ ===
-    private fun checkAllPermissions(): Boolean {
-        return checkSmsPermission() && checkAudioPermission() && checkLocationPermission() && checkStoragePermission()
-    }
-
-    // === ОБНОВИТЕ МЕТОД ЗАПРОСА РАЗРЕШЕНИЙ ===
+    // Запрос всех разрешений
     private fun requestAllPermissions() {
         val permissionsToRequest = mutableListOf<String>()
         
