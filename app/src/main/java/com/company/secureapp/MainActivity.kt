@@ -313,3 +313,10 @@ class MainActivity : BaseActivity() {
         handler.removeCallbacksAndMessages(null)
     }
 }
+
+// Data class для результата отправки (добавьте в конец файла, после класса MainActivity)
+data class AlertResult(
+    val success: Boolean,
+    val messages: List<String>,
+    val details: String
+)
