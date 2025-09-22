@@ -314,7 +314,7 @@ class MainActivity : BaseActivity() {
     }
 }
 
-// Data class для результата отправки (добавьте в конец файла, после класса MainActivity)
+// Data class для результата отправки
 data class AlertResult(
     val success: Boolean,
     val messages: List<String>,
