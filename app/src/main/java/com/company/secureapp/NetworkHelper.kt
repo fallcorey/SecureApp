@@ -236,9 +236,9 @@ class NetworkHelper(private val context: Context) {
     }
 }
 
-// Data class для результата отправки
-data class AlertResult(
-    val success: Boolean,
-    val messages: List<String>,
-    val details: String
-)
+// ⚠️ УДАЛИТЬ ЭТОТ БЛОК ИЗ NetworkHelper.kt - AlertResult уже объявлен в MainActivity.kt
+// data class AlertResult(
+//     val success: Boolean,
+//     val messages: List<String>,
+//     val details: String
+// )
