@@ -1,261 +1,317 @@
 package com.company.secureapp
 
-import android.content.Context
-import android.net.ConnectivityManager
-import android.net.NetworkCapabilities
-import android.telephony.SmsManager
-import android.telephony.TelephonyManager
+import android.content.Intent
+import android.os.Bundle
+import android.os.CountDownTimer
+import android.os.Handler
+import android.os.Looper
+import android.widget.Button
+import android.widget.TextView
+import androidx.core.app.ActivityCompat
+import android.Manifest
+import android.content.pm.PackageManager
 import android.util.Log
-import java.net.HttpURLConnection
-import java.net.URL
-import org.json.JSONObject
+import android.view.View
 
-class NetworkHelper(private val context: Context) {
+class MainActivity : BaseActivity() {
 
-    companion object {
-        private const val TAG = "NetworkHelper"
+    private lateinit var preferenceHelper: SimplePreferenceHelper
+    private lateinit var audioRecorder: AudioRecorderHelper
+    private lateinit var locationHelper: LocationHelper
+    private lateinit var networkHelper: NetworkHelper
+    private val SMS_PERMISSION_CODE = 1001
+    
+    private lateinit var sosButton: Button
+    private lateinit var timerText: TextView
+    private lateinit var statusText: TextView
+    private lateinit var settingsButton: Button
+    
+    private var countDownTimer: CountDownTimer? = null
+    private var isEmergencyActive = false
+    private val handler = Handler(Looper.getMainLooper())
+
+    // Методы проверки разрешений
+    private fun checkSmsPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
     }
 
-    // Получение информации о сети
-    fun getNetworkInfo(): String {
-        return try {
-            val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-            
-            val networkType = when (telephonyManager.networkType) {
-                TelephonyManager.NETWORK_TYPE_GPRS, TelephonyManager.NETWORK_TYPE_EDGE -> "2G"
-                TelephonyManager.NETWORK_TYPE_UMTS, TelephonyManager.NETWORK_TYPE_HSDPA -> "3G"
-                TelephonyManager.NETWORK_TYPE_LTE -> "4G"
-                TelephonyManager.NETWORK_TYPE_NR -> "5G"
-                else -> "Unknown"
-            }
-            
-            val carrierName = telephonyManager.networkOperatorName
-            val signalStrength = "Unknown" // Для получения силы сигнала нужны дополнительные разрешения
-            
-            "Network: $networkType, Carrier: $carrierName, Signal: $signalStrength"
-        } catch (e: Exception) {
-            Log.e(TAG, "Network info error: ${e.message}")
-            "Network: Unknown"
-        }
+    private fun checkAudioPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.RECORD_AUDIO) == PackageManager.PERMISSION_GRANTED
     }
 
-    // Проверка наличия интернета
-    fun hasInternetConnection(): Boolean {
-        val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
-        return try {
-            val network = connectivityManager.activeNetwork ?: return false
-            val capabilities = connectivityManager.getNetworkCapabilities(network) ?: return false
-            
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
-            capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
-        } catch (e: Exception) {
-            Log.e(TAG, "Internet check error: ${e.message}")
-            false
-        }
+    private fun checkLocationPermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_FINE_LOCATION) == PackageManager.PERMISSION_GRANTED ||
+               ActivityCompat.checkSelfPermission(this, Manifest.permission.ACCESS_COARSE_LOCATION) == PackageManager.PERMISSION_GRANTED
     }
 
-    // Основной метод отправки с приоритетами
-    fun sendEmergencyAlert(
-        userName: String,
-        userPhone: String,
-        locationInfo: String,
-        networkInfo: String,
-        audioRecorded: Boolean,
-        recordingTime: Long,
-        serverUrl: String,
-        authToken: String,
-        smsNumber: String
-    ): AlertResult {
-        
-        return try {
-            Log.d(TAG, "Starting emergency alert sequence...")
-            
-            val results = mutableListOf<String>()
-            var successCount = 0
-            
-            // 1. ПРИОРИТЕТ: Отправка на сервер (если есть интернет и настройки)
-            if (hasInternetConnection() && serverUrl.isNotBlank()) {
-                val serverSuccess = sendToServer(serverUrl, authToken, createServerPayload(
-                    userName, userPhone, locationInfo, networkInfo, audioRecorded, recordingTime
-                ))
-                
-                if (serverSuccess) {
-                    results.add("✓ Sent to server")
-                    successCount++
-                    Log.d(TAG, "Server send successful")
-                } else {
-                    results.add("✗ Failed to send to server")
-                    Log.w(TAG, "Server send failed")
-                }
+    private fun checkStoragePermission(): Boolean {
+        return ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+    }
+
+    private fun checkAllPermissions(): Boolean {
+        return checkSmsPermission() && checkAudioPermission() && checkLocationPermission() && checkStoragePermission()
+    }
+
+    override fun onCreate(savedInstanceState: Bundle?) {
+        super.onCreate(savedInstanceState)
+        setContentView(R.layout.activity_main)
+
+        preferenceHelper = SimplePreferenceHelper(this)
+        audioRecorder = AudioRecorderHelper(this)
+        locationHelper = LocationHelper(this)
+        networkHelper = NetworkHelper(this)
+
+        // Диагностика записи аудио
+        debugAudioRecording()
+
+        // Находим элементы
+        sosButton = findViewById(R.id.sos_button)
+        timerText = findViewById(R.id.timer_text)
+        statusText = findViewById(R.id.status_text)
+        settingsButton = findViewById(R.id.settings_button)
+
+        // Устанавливаем тексты
+        sosButton.text = "SOS"
+        settingsButton.text = getString(R.string.settings_button)
+
+        sosButton.setOnClickListener {
+            if (isEmergencyActive) {
+                cancelEmergency()
             } else {
-                if (!hasInternetConnection()) {
-                    results.add("⚠ No internet for server")
-                    Log.w(TAG, "No internet connection for server")
-                } else if (serverUrl.isBlank()) {
-                    results.add("⚠ No server URL configured")
-                    Log.w(TAG, "Server URL not configured")
-                }
-            }
-            
-            // 2. РЕЗЕРВ: Отправка SMS (если есть номер)
-            if (smsNumber.isNotBlank()) {
-                val smsSuccess = sendSms(smsNumber, createSmsMessage(
-                    userName, locationInfo, networkInfo, audioRecorded, recordingTime
-                ))
-                
-                if (smsSuccess) {
-                    results.add("✓ SMS sent")
-                    successCount++
-                    Log.d(TAG, "SMS send successful")
+                if (checkAllPermissions()) {
+                    startCountdown()
                 } else {
-                    results.add("✗ SMS failed")
-                    Log.w(TAG, "SMS send failed")
+                    requestAllPermissions()
                 }
-            } else {
-                results.add("⚠ No SMS number configured")
-                Log.w(TAG, "SMS number not configured")
+            }
+        }
+
+        settingsButton.setOnClickListener {
+            val intent = Intent(this, SettingsActivity::class.java)
+            startActivity(intent)
+        }
+    }
+
+    private fun debugAudioRecording() {
+        Log.d("MainActivity", "=== Audio Recording Debug ===")
+        Log.d("MainActivity", "Audio permission: ${checkAudioPermission()}")
+        Log.d("MainActivity", "Storage permission: ${checkStoragePermission()}")
+        
+        // Проверяем методы audioRecorder
+        try {
+            Log.d("MainActivity", "Recording status: ${audioRecorder.isRecording()}")
+            Log.d("MainActivity", "Recordings directory: ${audioRecorder.getRecordingsDirectory()}")
+            
+            // Проверяем существующие записи
+            val recordings = audioRecorder.getAllRecordings()
+            Log.d("MainActivity", "Existing recordings: ${recordings.size}")
+            recordings.forEach { file ->
+                Log.d("MainActivity", " - ${file.name} (${file.length()} bytes)")
+            }
+        } catch (e: Exception) {
+            Log.e("MainActivity", "Error in debugAudioRecording: ${e.message}")
+        }
+    }
+
+    // Таймер обратного отсчета 3 секунды
+    private fun startCountdown() {
+        isEmergencyActive = true
+        sosButton.text = "CANCEL"
+        sosButton.setBackgroundResource(android.R.drawable.btn_default)
+        timerText.visibility = View.VISIBLE
+        statusText.visibility = View.VISIBLE
+        statusText.text = getString(R.string.release_to_cancel)
+
+        countDownTimer = object : CountDownTimer(3000, 1000) {
+            override fun onTick(millisUntilFinished: Long) {
+                val seconds = (millisUntilFinished / 1000).toInt()
+                timerText.text = getString(R.string.sending_in, seconds.toString())
+            }
+
+            override fun onFinish() {
+                if (isEmergencyActive) {
+                    startEmergencyProcedure()
+                }
+            }
+        }.start()
+    }
+
+    // Отмена экстренного режима
+    private fun cancelEmergency() {
+        isEmergencyActive = false
+        countDownTimer?.cancel()
+        resetUI()
+        showToast(R.string.emergency_cancelled)
+    }
+
+    // Сброс UI к исходному состоянию
+    private fun resetUI() {
+        sosButton.text = "SOS"
+        sosButton.setBackgroundResource(R.drawable.sos_button_background)
+        timerText.visibility = View.GONE
+        statusText.visibility = View.GONE
+    }
+
+    // Основная процедура экстренного оповещения с интеллектуальной отправкой
+    private fun startEmergencyProcedure() {
+        statusText.text = "Sending emergency alert..."
+        
+        try {
+            val savedSmsNumber = preferenceHelper.getString("sms_number", "")
+            val savedUserName = preferenceHelper.getString("user_name", "User")
+            val serverUrl = preferenceHelper.getString("server_url", "")
+            val authToken = preferenceHelper.getString("server_auth_token", "")
+            
+            // Проверяем, есть ли хотя бы один способ отправки
+            if (savedSmsNumber.isBlank() && serverUrl.isBlank()) {
+                showToast("Please configure SMS number or server URL in settings")
+                resetUI()
+                return
+            }
+
+            // Получаем настройку времени записи
+            val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
+
+            // Получаем локацию и информацию о сети
+            val locationInfo = locationHelper.getLocationString()
+            val networkInfo = networkHelper.getNetworkInfo()
+
+            // Начинаем запись звука
+            val isRecording = audioRecorder.startRecording()
+            Log.d("MainActivity", "Audio recording started: $isRecording")
+
+            // ОТПРАВКА С ПРИОРИТЕТАМИ В ОТДЕЛЬНОМ ПОТОКЕ
+            Thread {
+                try {
+                    val alertResult = networkHelper.sendEmergencyAlert(
+                        userName = savedUserName,
+                        userPhone = preferenceHelper.getString("user_phone", ""),
+                        locationInfo = locationInfo,
+                        networkInfo = networkInfo,
+                        audioRecorded = isRecording,
+                        recordingTime = recordingTime,
+                        serverUrl = serverUrl,
+                        authToken = authToken,
+                        smsNumber = savedSmsNumber
+                    )
+                    
+                    // Обновляем UI в главном потоке
+                    runOnUiThread {
+                        if (alertResult.success) {
+                            statusText.text = "Emergency alert sent!"
+                            showToast("Alert delivered! ${alertResult.details}")
+                            Log.d("MainActivity", "Alert success: ${alertResult.messages}")
+                        } else {
+                            statusText.text = "Failed to send alert"
+                            showToast("Failed to send alert. Check settings.")
+                            Log.e("MainActivity", "Alert failed: ${alertResult.messages}")
+                        }
+                        
+                        // Показываем детали отправки в логах
+                        alertResult.messages.forEach { message ->
+                            Log.d("MainActivity", "Alert step: $message")
+                        }
+                    }
+                    
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Alert thread error: ${e.message}")
+                    runOnUiThread {
+                        statusText.text = "Error occurred"
+                        showToast("Error: ${e.message}")
+                    }
+                }
+            }.start()
+
+            // Останавливаем запись через заданное время
+            if (isRecording) {
+                handler.postDelayed({
+                    val stopped = audioRecorder.stopRecording()
+                    val filePath = audioRecorder.getRecordedFilePath()
+                    val file = audioRecorder.getRecordedFile()
+                    Log.d("MainActivity", "Recording stopped: $stopped")
+                    
+                    if (file != null && file.exists()) {
+                        Log.d("MainActivity", "Recording saved: ${file.name} (${file.length()} bytes)")
+                    } else {
+                        Log.e("MainActivity", "Recording file not found: $filePath")
+                    }
+                }, recordingTime)
             }
             
-            // 3. ФИНАЛЬНЫЙ РЕЗУЛЬТАТ
-            AlertResult(
-                success = successCount > 0,
-                messages = results,
-                details = "Sent via: ${results.filter { it.startsWith("✓") }.joinToString(", ")}"
-            )
+            // Автоматический сброс через 5 секунд
+            handler.postDelayed({
+                resetUI()
+                isEmergencyActive = false
+            }, 5000)
             
         } catch (e: Exception) {
-            Log.e(TAG, "Emergency alert error: ${e.message}")
-            AlertResult(
-                success = false,
-                messages = listOf("✗ System error: ${e.message}"),
-                details = "Failed to send alert"
-            )
+            Log.e("MainActivity", "Error in emergency procedure: ${e.message}")
+            e.printStackTrace()
+            statusText.text = "Error occurred"
+            showToast("Error: ${e.message}")
+            resetUI()
         }
     }
 
-    // Отправка на сервер
-    private fun sendToServer(serverUrl: String, authToken: String, payload: String): Boolean {
-        if (serverUrl.isBlank()) return false
+    private fun stopRecording() {
+        val stopped = audioRecorder.stopRecording()
+        Log.d("MainActivity", "Recording stopped: $stopped")
+    }
+
+    // Запрос всех разрешений
+    private fun requestAllPermissions() {
+        val permissionsToRequest = mutableListOf<String>()
         
-        return try {
-            val url = URL(serverUrl)
-            val connection = url.openConnection() as HttpURLConnection
-            
-            connection.apply {
-                requestMethod = "POST"
-                setRequestProperty("Content-Type", "application/json")
-                setRequestProperty("User-Agent", "SecureApp/1.0")
-                
-                // Добавляем токен если есть
-                if (authToken.isNotBlank()) {
-                    setRequestProperty("Authorization", "Bearer $authToken")
+        if (!checkSmsPermission()) permissionsToRequest.add(Manifest.permission.SEND_SMS)
+        if (!checkAudioPermission()) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
+        if (!checkStoragePermission()) permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        if (!checkLocationPermission()) {
+            permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
+            permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
+        }
+        
+        Log.d("MainActivity", "Requesting permissions: $permissionsToRequest")
+        
+        if (permissionsToRequest.isNotEmpty()) {
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), SMS_PERMISSION_CODE)
+        }
+    }
+
+    // Обработка разрешений
+    override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        
+        if (requestCode == SMS_PERMISSION_CODE) {
+            var allGranted = true
+            for (i in grantResults.indices) {
+                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                    allGranted = false
+                    showToast("Permission denied: ${permissions[i]}")
+                    Log.d("MainActivity", "Permission denied: ${permissions[i]}")
+                } else {
+                    Log.d("MainActivity", "Permission granted: ${permissions[i]}")
                 }
-                
-                connectTimeout = 10000
-                readTimeout = 15000
-                doOutput = true
             }
-
-            // Отправка данных
-            val outputStream = connection.outputStream
-            outputStream.write(payload.toByteArray(Charsets.UTF_8))
-            outputStream.flush()
-            outputStream.close()
-
-            val responseCode = connection.responseCode
-            Log.d(TAG, "Server response: $responseCode")
-            
-            connection.disconnect()
-            responseCode in 200..299
-            
-        } catch (e: Exception) {
-            Log.e(TAG, "Server request failed: ${e.message}")
-            false
+            if (allGranted) {
+                showToast("All permissions granted!")
+                startCountdown()
+            }
         }
     }
 
-    // Отправка SMS
-    fun sendSms(phoneNumber: String, message: String): Boolean {
-        return try {
-            val smsManager = SmsManager.getDefault()
-            smsManager.sendTextMessage(phoneNumber, null, message, null, null)
-            Log.d(TAG, "SMS sent to $phoneNumber")
-            true
-        } catch (e: Exception) {
-            Log.e(TAG, "SMS send failed: ${e.message}")
-            false
-        }
+    override fun onStop() {
+        super.onStop()
+        countDownTimer?.cancel()
+        audioRecorder.cleanup()
+        handler.removeCallbacksAndMessages(null)
     }
 
-    // Создание payload для сервера
-    private fun createServerPayload(
-        userName: String,
-        userPhone: String,
-        locationInfo: String,
-        networkInfo: String,
-        audioRecorded: Boolean,
-        recordingTime: Long
-    ): String {
-        return JSONObject().apply {
-            put("alert_id", "alert_${System.currentTimeMillis()}")
-            put("event_type", "emergency_alert")
-            put("timestamp", System.currentTimeMillis())
-            
-            put("user_data", JSONObject().apply {
-                put("full_name", userName)
-                put("phone_number", userPhone)
-            })
-            
-            put("location_data", JSONObject().apply {
-                put("info", locationInfo)
-                put("timestamp", System.currentTimeMillis())
-            })
-            
-            put("device_info", JSONObject().apply {
-                put("network", networkInfo)
-            })
-            
-            put("media", JSONObject().apply {
-                put("audio_recording", JSONObject().apply {
-                    put("available", audioRecorded)
-                    put("duration_ms", recordingTime)
-                })
-            })
-            
-            put("additional_data", JSONObject().apply {
-                put("app_version", "1.0.0")
-                put("platform", "android")
-            })
-        }.toString()
-    }
-
-    // Создание SMS сообщения
-    private fun createSmsMessage(
-        userName: String,
-        locationInfo: String,
-        networkInfo: String,
-        audioRecorded: Boolean,
-        recordingTime: Long
-    ): String {
-        val recordingDuration = when (recordingTime) {
-            30000L -> "30 seconds"
-            60000L -> "1 minute"
-            120000L -> "2 minutes"
-            300000L -> "5 minutes"
-            else -> "${recordingTime / 1000} seconds"
-        }
-        
-        return """
-            🚨 EMERGENCY from $userName!
-            Need immediate assistance!
-            
-            📍 $locationInfo
-            📶 $networkInfo
-            ${if (audioRecorded) "🎤 Audio recording active ($recordingDuration)" else ""}
-            
-            Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}
-            """.trimIndent()
+    override fun onDestroy() {
+        super.onDestroy()
+        countDownTimer?.cancel()
+        audioRecorder.cleanup()
+        handler.removeCallbacksAndMessages(null)
     }
 }
+
+// ⚠️ УДАЛИТЕ ЭТОТ БЛОК - AlertResult теперь в отдельном файле
