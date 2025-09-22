@@ -30,8 +30,7 @@ class MainActivity : BaseActivity() {
     private var isEmergencyActive = false
     private val handler = Handler(Looper.getMainLooper())
 
-    // === ПЕРЕНЕСИТЕ МЕТОДЫ ПРОВЕРКИ РАЗРЕШЕНИЙ СЮДА (В НАЧАЛО КЛАССА) ===
-    
+    // Методы проверки разрешений
     private fun checkSmsPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
     }
@@ -153,16 +152,19 @@ class MainActivity : BaseActivity() {
         statusText.visibility = View.GONE
     }
 
-    // Основная процедура экстренного оповещения
+    // Основная процедура экстренного оповещения с интеллектуальной отправкой
     private fun startEmergencyProcedure() {
         statusText.text = "Sending emergency alert..."
         
         try {
             val savedSmsNumber = preferenceHelper.getString("sms_number", "")
             val savedUserName = preferenceHelper.getString("user_name", "User")
+            val serverUrl = preferenceHelper.getString("server_url", "")
+            val authToken = preferenceHelper.getString("server_auth_token", "")
             
-            if (savedSmsNumber.isBlank()) {
-                showToast("Please set SMS number in settings")
+            // Проверяем, есть ли хотя бы один способ отправки
+            if (savedSmsNumber.isBlank() && serverUrl.isBlank()) {
+                showToast("Please configure SMS number or server URL in settings")
                 resetUI()
                 return
             }
@@ -170,56 +172,70 @@ class MainActivity : BaseActivity() {
             // Получаем настройку времени записи
             val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
 
-            // Получаем локацию
+            // Получаем локацию и информацию о сети
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            // Логирование для диагностики
-            Log.d("MainActivity", "Starting audio recording with time: $recordingTime ms")
-            
             // Начинаем запись звука
             val isRecording = audioRecorder.startRecording()
             Log.d("MainActivity", "Audio recording started: $isRecording")
-            
+
+            // ОТПРАВКА С ПРИОРИТЕТАМИ В ОТДЕЛЬНОМ ПОТОКЕ
+            Thread {
+                try {
+                    val alertResult = networkHelper.sendEmergencyAlert(
+                        userName = savedUserName,
+                        userPhone = preferenceHelper.getString("user_phone", ""),
+                        locationInfo = locationInfo,
+                        networkInfo = networkInfo,
+                        audioRecorded = isRecording,
+                        recordingTime = recordingTime,
+                        serverUrl = serverUrl,
+                        authToken = authToken,
+                        smsNumber = savedSmsNumber
+                    )
+                    
+                    // Обновляем UI в главном потоке
+                    runOnUiThread {
+                        if (alertResult.success) {
+                            statusText.text = "Emergency alert sent!"
+                            showToast("Alert delivered! ${alertResult.details}")
+                            Log.d("MainActivity", "Alert success: ${alertResult.messages}")
+                        } else {
+                            statusText.text = "Failed to send alert"
+                            showToast("Failed to send alert. Check settings.")
+                            Log.e("MainActivity", "Alert failed: ${alertResult.messages}")
+                        }
+                        
+                        // Показываем детали отправки в логах
+                        alertResult.messages.forEach { message ->
+                            Log.d("MainActivity", "Alert step: $message")
+                        }
+                    }
+                    
+                } catch (e: Exception) {
+                    Log.e("MainActivity", "Alert thread error: ${e.message}")
+                    runOnUiThread {
+                        statusText.text = "Error occurred"
+                        showToast("Error: ${e.message}")
+                    }
+                }
+            }.start()
+
+            // Останавливаем запись через заданное время
             if (isRecording) {
-                // Используем сохраненное время записи
-                handler.postDelayed({ 
-                    stopRecording() 
-                    // Проверка файла после записи
+                handler.postDelayed({
+                    val stopped = audioRecorder.stopRecording()
                     val filePath = audioRecorder.getRecordedFilePath()
                     val file = audioRecorder.getRecordedFile()
+                    Log.d("MainActivity", "Recording stopped: $stopped")
+                    
                     if (file != null && file.exists()) {
-                        Log.d("MainActivity", "Recording saved successfully: ${file.name} (${file.length()} bytes)")
+                        Log.d("MainActivity", "Recording saved: ${file.name} (${file.length()} bytes)")
                     } else {
                         Log.e("MainActivity", "Recording file not found: $filePath")
                     }
                 }, recordingTime)
-            }
-
-            // Формируем сообщение с информацией о времени записи
-            val recordingDuration = when (recordingTime) {
-                30000L -> "30 seconds"
-                60000L -> "1 minute"
-                120000L -> "2 minutes"
-                300000L -> "5 minutes"
-                else -> "${recordingTime / 1000} seconds"
-            }
-
-            val message = "EMERGENCY from $savedUserName!\n" +
-                         "Need immediate assistance!\n" +
-                         "$locationInfo\n" +
-                         "Network: $networkInfo\n" +
-                         if (isRecording) "Audio recording active ($recordingDuration)" else ""
-
-            // Отправляем SMS
-            val smsSent = networkHelper.sendSms(savedSmsNumber, message)
-            
-            if (smsSent) {
-                statusText.text = "Emergency alert sent!"
-                showToast("Help is on the way! SMS sent to emergency contacts")
-            } else {
-                statusText.text = "Failed to send alert"
-                showToast("Failed to send SMS. Trying alternative methods...")
             }
             
             // Автоматический сброс через 5 секунд
@@ -285,6 +301,13 @@ class MainActivity : BaseActivity() {
 
     override fun onStop() {
         super.onStop()
+        countDownTimer?.cancel()
+        audioRecorder.cleanup()
+        handler.removeCallbacksAndMessages(null)
+    }
+
+    override fun onDestroy() {
+        super.onDestroy()
         countDownTimer?.cancel()
         audioRecorder.cleanup()
         handler.removeCallbacksAndMessages(null)
