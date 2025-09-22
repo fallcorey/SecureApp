@@ -4,8 +4,8 @@ import android.content.Context
 import android.net.ConnectivityManager
 import android.net.NetworkCapabilities
 import android.telephony.SmsManager
+import android.telephony.TelephonyManager
 import android.util.Log
-import java.io.*
 import java.net.HttpURLConnection
 import java.net.URL
 import org.json.JSONObject
@@ -14,6 +14,30 @@ class NetworkHelper(private val context: Context) {
 
     companion object {
         private const val TAG = "NetworkHelper"
+    }
+
+    // Получение информации о сети
+    fun getNetworkInfo(): String {
+        return try {
+            val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            
+            val networkType = when (telephonyManager.networkType) {
+                TelephonyManager.NETWORK_TYPE_GPRS, TelephonyManager.NETWORK_TYPE_EDGE -> "2G"
+                TelephonyManager.NETWORK_TYPE_UMTS, TelephonyManager.NETWORK_TYPE_HSDPA -> "3G"
+                TelephonyManager.NETWORK_TYPE_LTE -> "4G"
+                TelephonyManager.NETWORK_TYPE_NR -> "5G"
+                else -> "Unknown"
+            }
+            
+            val carrierName = telephonyManager.networkOperatorName
+            val signalStrength = "Unknown"
+            
+            "Network: $networkType, Carrier: $carrierName, Signal: $signalStrength"
+        } catch (e: Exception) {
+            Log.e(TAG, "Network info error: ${e.message}")
+            "Network: Unknown"
+        }
     }
 
     // Проверка наличия интернета
@@ -124,7 +148,6 @@ class NetworkHelper(private val context: Context) {
                 setRequestProperty("Content-Type", "application/json")
                 setRequestProperty("User-Agent", "SecureApp/1.0")
                 
-                // Добавляем токен если есть
                 if (authToken.isNotBlank()) {
                     setRequestProperty("Authorization", "Bearer $authToken")
                 }
@@ -134,7 +157,6 @@ class NetworkHelper(private val context: Context) {
                 doOutput = true
             }
 
-            // Отправка данных
             val outputStream = connection.outputStream
             outputStream.write(payload.toByteArray(Charsets.UTF_8))
             outputStream.flush()
@@ -235,10 +257,3 @@ class NetworkHelper(private val context: Context) {
             """.trimIndent()
     }
 }
-
-// ⚠️ УДАЛИТЬ ЭТОТ БЛОК ИЗ NetworkHelper.kt - AlertResult уже объявлен в MainActivity.kt
-// data class AlertResult(
-//     val success: Boolean,
-//     val messages: List<String>,
-//     val details: String
-// )
