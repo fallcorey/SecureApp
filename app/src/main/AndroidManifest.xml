@@ -2,6 +2,9 @@
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
     xmlns:tools="http://schemas.android.com/tools">
 
+    <!-- Разрешение для виджета -->
+    <uses-permission android:name="android.permission.BIND_APPWIDGET" />
+    
     <!-- Основные разрешения -->
     <uses-permission android:name="android.permission.INTERNET" />
     <uses-permission android:name="android.permission.ACCESS_FINE_LOCATION" />
@@ -10,45 +13,48 @@
     <uses-permission android:name="android.permission.SEND_SMS" />
     <uses-permission android:name="android.permission.ACCESS_NETWORK_STATE" />
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
-    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" />
-    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE" />
+    
+    <!-- Для записи в папку приложения (Android 10+) -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
+    <uses-permission android:name="android.permission.READ_EXTERNAL_STORAGE"
+        android:maxSdkVersion="28" />
 
     <application
         android:allowBackup="true"
-        android:dataExtractionRules="@xml/data_extraction_rules"
-        android:fullBackupContent="@xml/backup_rules"
-        android:icon="@mipmap/ic_launcher"
         android:label="@string/app_name"
+        android:theme="@style/Theme.AppCompat.Light.DarkActionBar"
+        android:icon="@mipmap/ic_launcher"
         android:roundIcon="@mipmap/ic_launcher_round"
-        android:supportsRtl="true"
-        android:theme="@style/Theme.SecureApp"
-        tools:targetApi="31">
-        
+        tools:targetApi="31"
+        android:requestLegacyExternalStorage="true">
+
         <!-- Главная активность -->
         <activity
             android:name=".MainActivity"
-            android:exported="true">
+            android:exported="true"
+            android:screenOrientation="portrait">
             <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
                 <category android:name="android.intent.category.LAUNCHER" />
             </intent-filter>
             
-            <!-- Intent filter для виджета -->
+            <!-- Для виджета -->
             <intent-filter>
                 <action android:name="ACTION_TRIGGER_SOS" />
                 <category android:name="android.intent.category.DEFAULT" />
             </intent-filter>
         </activity>
-
+        
+        <!-- Активность настроек -->
         <activity
             android:name=".SettingsActivity"
             android:exported="false" />
-
+            
         <!-- Ресивер для виджета -->
         <receiver
-            android:name=".SOSWidget"
-            android:exported="true"
-            android:label="SOS Widget">
+            android:name=".SosAppWidget"
+            android:exported="true">
             <intent-filter>
                 <action android:name="android.appwidget.action.APPWIDGET_UPDATE" />
             </intent-filter>
@@ -56,7 +62,7 @@
                 android:name="android.appwidget.provider"
                 android:resource="@xml/sos_widget_info" />
         </receiver>
-
+        
     </application>
 
 </manifest>
