@@ -148,9 +148,7 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun restartApp() {
-        val intent = Intent(this, MainActivity::class.java) // ← ИСПРАВЛЕНО: убрали лишний импорт
-        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-        startActivity(intent)
+        // Просто завершаем активность - MainActivity автоматически перезапустится с новым языком
         finish()
     }
 
