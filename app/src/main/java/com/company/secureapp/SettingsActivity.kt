@@ -1,6 +1,7 @@
 package com.company.secureapp
 
 import android.content.Intent
+import android.content.SharedPreferences
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -12,6 +13,7 @@ import android.widget.Spinner
 class SettingsActivity : BaseActivity() {
 
     private lateinit var preferenceHelper: SimplePreferenceHelper
+    private lateinit var sharedPreferences: SharedPreferences
     private lateinit var languageSpinner: Spinner
     private lateinit var recordingTimeSpinner: Spinner
     private var currentLanguage: String = "en"
@@ -22,6 +24,7 @@ class SettingsActivity : BaseActivity() {
         setContentView(R.layout.activity_settings)
 
         preferenceHelper = SimplePreferenceHelper(this)
+        sharedPreferences = getSharedPreferences("AppPreferences", MODE_PRIVATE)
 
         val saveButton = findViewById<Button>(R.id.save_button)
         languageSpinner = findViewById<Spinner>(R.id.language_spinner)
@@ -39,28 +42,7 @@ class SettingsActivity : BaseActivity() {
         setupRecordingTimeSpinner()
 
         // Загружаем сохраненные настройки
-        serverUrl.setText(preferenceHelper.getString("server_url", ""))
-        serverAuthToken.setText(preferenceHelper.getString("server_auth_token", ""))
-        mattermostWebhook.setText(preferenceHelper.getString("mattermost_webhook", ""))
-        mattermostChannel.setText(preferenceHelper.getString("mattermost_channel", ""))
-        smsNumber.setText(preferenceHelper.getString("sms_number", ""))
-        userName.setText(preferenceHelper.getString("user_name", ""))
-        userPhone.setText(preferenceHelper.getString("user_phone", ""))
-
-        // Загружаем сохраненный язык
-        currentLanguage = preferenceHelper.getString("app_language", "en")
-        val languagePosition = when (currentLanguage) {
-            "en" -> 0
-            "ru" -> 1
-            else -> 0
-        }
-        languageSpinner.setSelection(languagePosition)
-
-        // Загружаем сохраненное время записи
-        val savedRecordingTime = preferenceHelper.getString("recording_time", "30000")
-        val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
-        val recordingTimePosition = recordingTimeValues.indexOf(savedRecordingTime).coerceAtLeast(0)
-        recordingTimeSpinner.setSelection(recordingTimePosition)
+        loadSavedSettings(serverUrl, serverAuthToken, mattermostWebhook, mattermostChannel, smsNumber, userName, userPhone)
 
         // Обработчик выбора языка
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -68,12 +50,12 @@ class SettingsActivity : BaseActivity() {
                 val selectedLanguage = when (position) {
                     0 -> "en"
                     1 -> "ru"
+                    2 -> "es"
+                    3 -> "fr"
                     else -> "en"
                 }
                 
                 if (selectedLanguage != currentLanguage) {
-                    preferenceHelper.saveString("app_language", selectedLanguage)
-                    changeLanguage(selectedLanguage)
                     languageChanged = true
                     currentLanguage = selectedLanguage
                 }
@@ -83,42 +65,93 @@ class SettingsActivity : BaseActivity() {
         }
 
         saveButton.setOnClickListener {
-            val serverUrlText = serverUrl.text.toString().trim()
-            val serverAuthTokenText = serverAuthToken.text.toString().trim()
-            val mattermostWebhookText = mattermostWebhook.text.toString().trim()
-            val mattermostChannelText = mattermostChannel.text.toString().trim()
-            val smsNumberText = smsNumber.text.toString().trim()
-            val userNameText = userName.text.toString().trim()
-            val userPhoneText = userPhone.text.toString().trim()
-
-            // Проверяем номер телефона
-            if (smsNumberText.isNotBlank() && !smsNumberText.startsWith("+")) {
-                showToast("Phone number must start with '+' (format: +79123456789)")
-                return@setOnClickListener
-            }
-
-            try {
-                // Сохраняем все настройки
-                preferenceHelper.saveString("server_url", serverUrlText)
-                preferenceHelper.saveString("server_auth_token", serverAuthTokenText)
-                preferenceHelper.saveString("mattermost_webhook", mattermostWebhookText)
-                preferenceHelper.saveString("mattermost_channel", mattermostChannelText)
-                preferenceHelper.saveString("sms_number", smsNumberText)
-                preferenceHelper.saveString("user_name", userNameText)
-                preferenceHelper.saveString("user_phone", userPhoneText)
-
-                // Сохраняем время записи
-                val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
-                val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
-                preferenceHelper.saveString("recording_time", selectedRecordingTime)
-
-                showToast(R.string.settings_saved)
-                finish()
-                
-            } catch (e: Exception) {
-                showToast("Save error: ${e.message}")
-            }
+            saveSettings(serverUrl, serverAuthToken, mattermostWebhook, mattermostChannel, smsNumber, userName, userPhone)
         }
+    }
+
+    private fun loadSavedSettings(
+        serverUrl: EditText, serverAuthToken: EditText, mattermostWebhook: EditText,
+        mattermostChannel: EditText, smsNumber: EditText, userName: EditText, userPhone: EditText
+    ) {
+        serverUrl.setText(preferenceHelper.getString("server_url", ""))
+        serverAuthToken.setText(preferenceHelper.getString("server_auth_token", ""))
+        mattermostWebhook.setText(preferenceHelper.getString("mattermost_webhook", ""))
+        mattermostChannel.setText(preferenceHelper.getString("mattermost_channel", ""))
+        smsNumber.setText(preferenceHelper.getString("sms_number", ""))
+        userName.setText(preferenceHelper.getString("user_name", ""))
+        userPhone.setText(preferenceHelper.getString("user_phone", ""))
+
+        // Загружаем сохраненный язык
+        currentLanguage = sharedPreferences.getString("selected_language", "en") ?: "en"
+        val languagePosition = when (currentLanguage) {
+            "en" -> 0
+            "ru" -> 1
+            "es" -> 2
+            "fr" -> 3
+            else -> 0
+        }
+        languageSpinner.setSelection(languagePosition)
+
+        // Загружаем сохраненное время записи
+        val savedRecordingTime = preferenceHelper.getString("recording_time", "30000")
+        val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
+        val recordingTimePosition = recordingTimeValues.indexOf(savedRecordingTime).coerceAtLeast(0)
+        recordingTimeSpinner.setSelection(recordingTimePosition)
+    }
+
+    private fun saveSettings(
+        serverUrl: EditText, serverAuthToken: EditText, mattermostWebhook: EditText,
+        mattermostChannel: EditText, smsNumber: EditText, userName: EditText, userPhone: EditText
+    ) {
+        val serverUrlText = serverUrl.text.toString().trim()
+        val serverAuthTokenText = serverAuthToken.text.toString().trim()
+        val mattermostWebhookText = mattermostWebhook.text.toString().trim()
+        val mattermostChannelText = mattermostChannel.text.toString().trim()
+        val smsNumberText = smsNumber.text.toString().trim()
+        val userNameText = userName.text.toString().trim()
+        val userPhoneText = userPhone.text.toString().trim()
+
+        // Проверяем номер телефона
+        if (smsNumberText.isNotBlank() && !smsNumberText.startsWith("+")) {
+            showToast("Phone number must start with '+' (format: +79123456789)")
+            return
+        }
+
+        try {
+            // Сохраняем все настройки
+            preferenceHelper.saveString("server_url", serverUrlText)
+            preferenceHelper.saveString("server_auth_token", serverAuthTokenText)
+            preferenceHelper.saveString("mattermost_webhook", mattermostWebhookText)
+            preferenceHelper.saveString("mattermost_channel", mattermostChannelText)
+            preferenceHelper.saveString("sms_number", smsNumberText)
+            preferenceHelper.saveString("user_name", userNameText)
+            preferenceHelper.saveString("user_phone", userPhoneText)
+
+            // Сохраняем время записи
+            val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
+            val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
+            preferenceHelper.saveString("recording_time", selectedRecordingTime)
+
+            // Сохраняем язык только при изменении
+            if (languageChanged) {
+                changeLanguage(currentLanguage)
+                showToast("Settings saved! Language changed to $currentLanguage")
+                restartApp()
+            } else {
+                showToast("Settings saved!")
+                finish()
+            }
+            
+        } catch (e: Exception) {
+            showToast("Save error: ${e.message}")
+        }
+    }
+
+    private fun restartApp() {
+        val intent = Intent(this, MainActivity::class.java) // ← ИСПРАВЛЕНО: убрали лишний импорт
+        intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
+        startActivity(intent)
+        finish()
     }
 
     private fun setupLanguageSpinner() {
@@ -143,10 +176,7 @@ class SettingsActivity : BaseActivity() {
 
     override fun onBackPressed() {
         if (languageChanged) {
-            val intent = Intent(this, MainActivity::class.java)
-            intent.addFlags(Intent.FLAG_ACTIVITY_CLEAR_TOP or Intent.FLAG_ACTIVITY_NEW_TASK)
-            startActivity(intent)
-            finish()
+            restartApp()
         } else {
             super.onBackPressed()
         }
