@@ -1,6 +1,5 @@
 package com.company.secureapp
 
-import android.content.Context
 import android.content.Intent
 import android.os.Bundle
 import android.os.CountDownTimer
@@ -15,7 +14,6 @@ import android.content.pm.PackageManager
 import android.util.Log
 import android.view.View
 import java.io.File
-import java.util.Locale
 
 class MainActivity : BaseActivity() {
 
@@ -33,32 +31,6 @@ class MainActivity : BaseActivity() {
     private var countDownTimer: CountDownTimer? = null
     private var isEmergencyActive = false
     private val handler = Handler(Looper.getMainLooper())
-
-    override fun attachBaseContext(newBase: Context) {
-        val preferences = newBase.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val language = preferences.getString("selected_language", "en") ?: "en"
-        
-        // Создаем конфигурацию с выбранным языком
-        val configuration = newBase.resources.configuration
-        val locale = Locale(language)
-        Locale.setDefault(locale)
-        
-        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            configuration.setLocale(locale)
-        } else {
-            configuration.locale = locale
-        }
-        
-        // Создаем новый контекст с обновленной конфигурацией
-        val context = if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
-            newBase.createConfigurationContext(configuration)
-        } else {
-            newBase.resources.updateConfiguration(configuration, newBase.resources.displayMetrics)
-            newBase
-        }
-        
-        super.attachBaseContext(context)
-    }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -84,7 +56,7 @@ class MainActivity : BaseActivity() {
         // Логируем состояние разрешений
         Log.d("MainActivity", "Permissions - Audio: ${checkAudioPermission()}, Storage: ${checkStoragePermission()}, Location: ${checkLocationPermission()}, SMS: ${checkSmsPermission()}")
 
-        // Обработка intent от виджета - ВАЖНО: этот код должен быть ДО установки onClickListener
+        // Обработка intent от виджета
         handleWidgetIntent()
 
         sosButton.setOnClickListener {
