@@ -1,19 +1,21 @@
 <?xml version="1.0" encoding="utf-8"?>
-<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
     android:layout_width="match_parent"
     android:layout_height="match_parent"
+    android:orientation="vertical"
     android:background="@drawable/widget_background"
-    android:padding="8dp">
+    android:padding="8dp"
+    android:gravity="center">
 
     <Button
-        android:id="@+id/widget_sos_button"
-        android:layout_width="match_parent"
-        android:layout_height="match_parent"
-        android:text="SOS"
-        android:textSize="14sp"
-        android:textStyle="bold"
-        android:textColor="#FFFFFF"
+        android:id="@+id/sos_widget_button"
+        android:layout_width="40dp"
+        android:layout_height="40dp"
         android:background="@drawable/sos_widget_button"
+        android:text="SOS"
+        android:textColor="#FFFFFF"
+        android:textSize="12sp"
+        android:textStyle="bold"
         android:gravity="center" />
 
-</RelativeLayout>
+</LinearLayout>
