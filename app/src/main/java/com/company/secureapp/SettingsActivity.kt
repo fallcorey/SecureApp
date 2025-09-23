@@ -2,6 +2,7 @@ package com.company.secureapp
 
 import android.content.Intent
 import android.content.SharedPreferences
+import android.content.res.Resources
 import android.os.Bundle
 import android.view.View
 import android.widget.AdapterView
@@ -9,6 +10,7 @@ import android.widget.ArrayAdapter
 import android.widget.Button
 import android.widget.EditText
 import android.widget.Spinner
+import java.util.*
 
 class SettingsActivity : BaseActivity() {
 
@@ -17,7 +19,6 @@ class SettingsActivity : BaseActivity() {
     private lateinit var languageSpinner: Spinner
     private lateinit var recordingTimeSpinner: Spinner
     private var currentLanguage: String = "en"
-    private var languageChanged = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -42,7 +43,7 @@ class SettingsActivity : BaseActivity() {
         // Загружаем сохраненные настройки
         loadSavedSettings(serverUrl, serverAuthToken, smsNumber, userName, userPhone)
 
-        // Обработчик выбора языка
+        // 🔴 НЕМЕДЛЕННАЯ СМЕНА ЯЗЫКА ПРИ ВЫБОРЕ
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedLanguage = when (position) {
@@ -54,8 +55,9 @@ class SettingsActivity : BaseActivity() {
                 }
                 
                 if (selectedLanguage != currentLanguage) {
-                    languageChanged = true
                     currentLanguage = selectedLanguage
+                    // 🔴 МЕНЯЕМ ЯЗЫК СРАЗУ ПРИ ВЫБОРЕ
+                    changeLanguageImmediately(selectedLanguage)
                 }
             }
 
@@ -130,6 +132,9 @@ class SettingsActivity : BaseActivity() {
             val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
             preferenceHelper.saveString("recording_time", selectedRecordingTime)
 
+            // Сохраняем выбранный язык
+            sharedPreferences.edit().putString("selected_language", currentLanguage).apply()
+
             // Показываем статус записи аудио
             val recordingTime = selectedRecordingTime.toLongOrNull() ?: 30000
             val audioStatusMessage = if (recordingTime == 0L) {
@@ -138,23 +143,70 @@ class SettingsActivity : BaseActivity() {
                 "Audio recording: ${recordingTime / 1000} seconds"
             }
 
-            // Сохраняем язык только при изменении
-            if (languageChanged) {
-                changeLanguage(currentLanguage)
-                showToast("Settings saved! $audioStatusMessage - Language changed to $currentLanguage")
-                restartApp()
-            } else {
-                showToast("Settings saved! $audioStatusMessage")
-                finish()
-            }
+            showToast("Settings saved! $audioStatusMessage")
+            finish()
             
         } catch (e: Exception) {
             showToast("Save error: ${e.message}")
         }
     }
 
-    private fun restartApp() {
-        finish()
+    // 🔴 НОВЫЙ МЕТОД: НЕМЕДЛЕННАЯ СМЕНА ЯЗЫКА
+    private fun changeLanguageImmediately(languageCode: String) {
+        try {
+            // Сохраняем язык в настройках
+            sharedPreferences.edit().putString("selected_language", languageCode).apply()
+            
+            // Обновляем локализацию текущей активности
+            updateActivityLanguage(languageCode)
+            
+            showToast("Language changed to: ${getLanguageName(languageCode)}")
+            
+        } catch (e: Exception) {
+            Log.e("SettingsActivity", "Error changing language: ${e.message}")
+            showToast("Error changing language")
+        }
+    }
+
+    // 🔴 ОБНОВЛЯЕМ ЯЗЫК ТЕКУЩЕЙ АКТИВНОСТИ
+    private fun updateActivityLanguage(languageCode: String) {
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
+        
+        val resources = resources
+        val configuration = resources.configuration
+        configuration.setLocale(locale)
+        
+        if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.N) {
+            createConfigurationContext(configuration)
+        }
+        
+        resources.updateConfiguration(configuration, resources.displayMetrics)
+        
+        // Перезагружаем UI элементы с новым языком
+        reloadUIWithNewLanguage()
+    }
+
+    // 🔴 ПЕРЕЗАГРУЗКА UI ЭЛЕМЕНТОВ
+    private fun reloadUIWithNewLanguage() {
+        val saveButton = findViewById<Button>(R.id.save_button)
+        
+        // Обновляем текст кнопки
+        saveButton.text = getString(R.string.save_settings)
+        
+        // Можно добавить обновление других текстов если нужно
+        // val titleTextView = findViewById<TextView>(R.id.title_text) // если есть
+        // titleTextView.text = getString(R.string.settings_title)
+    }
+
+    private fun getLanguageName(languageCode: String): String {
+        return when (languageCode) {
+            "en" -> "English"
+            "ru" -> "Russian"
+            "es" -> "Spanish"
+            "fr" -> "French"
+            else -> "English"
+        }
     }
 
     private fun setupLanguageSpinner() {
@@ -178,10 +230,7 @@ class SettingsActivity : BaseActivity() {
     }
 
     override fun onBackPressed() {
-        if (languageChanged) {
-            restartApp()
-        } else {
-            super.onBackPressed()
-        }
+        // При возврате активити перезапустится с новым языком
+        super.onBackPressed()
     }
 }
