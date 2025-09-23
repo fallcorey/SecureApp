@@ -72,8 +72,6 @@ class MainActivity : BaseActivity() {
         locationHelper = LocationHelper(this)
         networkHelper = NetworkHelper(this)
 
-        debugAudioRecording()
-
         sosButton = findViewById(R.id.sos_button)
         timerText = findViewById(R.id.timer_text)
         statusText = findViewById(R.id.status_text)
@@ -97,25 +95,6 @@ class MainActivity : BaseActivity() {
         settingsButton.setOnClickListener {
             val intent = Intent(this, SettingsActivity::class.java)
             startActivity(intent)
-        }
-    }
-
-    private fun debugAudioRecording() {
-        Log.d("MainActivity", "=== Audio Recording Debug ===")
-        Log.d("MainActivity", "Audio permission: ${checkAudioPermission()}")
-        Log.d("MainActivity", "Storage permission: ${checkStoragePermission()}")
-        
-        try {
-            Log.d("MainActivity", "Recording status: ${audioRecorder.isRecording()}")
-            Log.d("MainActivity", "Recordings directory: ${audioRecorder.getRecordingsDirectory()}")
-            
-            val recordings = audioRecorder.getAllRecordings()
-            Log.d("MainActivity", "Existing recordings: ${recordings.size}")
-            recordings.forEach { file ->
-                Log.d("MainActivity", " - ${file.name} (${file.length()} bytes)")
-            }
-        } catch (e: Exception) {
-            Log.e("MainActivity", "Error in debugAudioRecording: ${e.message}")
         }
     }
 
@@ -176,39 +155,42 @@ class MainActivity : BaseActivity() {
                 return
             }
 
-            val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
+            // 🔴 ВАЖНОЕ ИЗМЕНЕНИЕ: Получаем время записи и проверяем на 0
+            val recordingTimeStr = preferenceHelper.getString("recording_time", "30000")
+            val recordingTime = recordingTimeStr.toLongOrNull() ?: 30000
+            
+            Log.d("MainActivity", "Recording time setting: $recordingTime ms")
 
-            // ИСПРАВЛЕННАЯ СТРОКА: используем networkHelper.getNetworkInfo()
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            val isRecording = if (checkAudioPermission()) {
-                audioRecorder.startRecording()
+            // 🔴 ЗАПИСЬ АУДИО ТОЛЬКО ЕСЛИ ВРЕМЯ > 0
+            val isAudioRecording = if (recordingTime > 0 && checkAudioPermission()) {
+                val started = audioRecorder.startRecording()
+                Log.d("MainActivity", "Audio recording started: $started (time: ${recordingTime}ms)")
+                started
             } else {
+                if (recordingTime == 0L) {
+                    Log.d("MainActivity", "Audio recording DISABLED (time = 0)")
+                } else {
+                    Log.d("MainActivity", "Audio recording skipped - no permission")
+                }
                 false
             }
-            Log.d("MainActivity", "Audio recording started: $isRecording")
 
             Thread {
                 try {
-                    Log.d("MainActivity", "Starting alert in background thread")
-                    
                     val alertResult = networkHelper.sendEmergencyAlert(
                         userName = savedUserName,
                         userPhone = preferenceHelper.getString("user_phone", ""),
                         locationInfo = locationInfo,
                         networkInfo = networkInfo,
-                        audioRecorded = isRecording,
+                        audioRecorded = isAudioRecording,
                         recordingTime = recordingTime,
                         serverUrl = serverUrl,
                         authToken = authToken,
                         smsNumber = savedSmsNumber
                     )
-                    
-                    Log.d("MainActivity", "Alert result: ${alertResult.success}")
-                    alertResult.messages.forEach { message ->
-                        Log.d("MainActivity", "Alert step: $message")
-                    }
                     
                     runOnUiThread {
                         if (alertResult.success) {
@@ -217,14 +199,11 @@ class MainActivity : BaseActivity() {
                         } else {
                             statusText.text = "Failed to send alert"
                             showToast("Failed: ${alertResult.details}")
-                            alertResult.messages.forEach { message ->
-                                Log.e("MainActivity", "FAILED: $message")
-                            }
                         }
                     }
                     
                 } catch (e: Exception) {
-                    Log.e("MainActivity", "Background thread error: ${e.message}")
+                    Log.e("MainActivity", "Alert thread error: ${e.message}")
                     runOnUiThread {
                         statusText.text = "Error occurred"
                         showToast("Error: ${e.message}")
@@ -232,14 +211,17 @@ class MainActivity : BaseActivity() {
                 }
             }.start()
 
-            if (isRecording) {
+            // 🔴 ОСТАНАВЛИВАЕМ ЗАПИСЬ ТОЛЬКО ЕСЛИ ОНА БЫЛА ЗАПУЩЕНА И ВРЕМЯ > 0
+            if (isAudioRecording && recordingTime > 0) {
                 handler.postDelayed({
+                    Log.d("MainActivity", "Stopping audio recording after $recordingTime ms")
                     val stopped = audioRecorder.stopRecording()
                     val file = audioRecorder.getRecordedFile()
-                    Log.d("MainActivity", "Recording stopped: $stopped")
                     
                     if (file != null && file.exists()) {
-                        Log.d("MainActivity", "Recording saved: ${file.name} (${file.length()} bytes)")
+                        Log.d("MainActivity", "✅ Audio file saved: ${file.absolutePath}")
+                    } else {
+                        Log.e("MainActivity", "❌ Audio file not found")
                     }
                 }, recordingTime)
             }
@@ -251,7 +233,6 @@ class MainActivity : BaseActivity() {
             
         } catch (e: Exception) {
             Log.e("MainActivity", "Error in emergency procedure: ${e.message}")
-            e.printStackTrace()
             statusText.text = "Error occurred"
             showToast("Error: ${e.message}")
             resetUI()
@@ -276,8 +257,6 @@ class MainActivity : BaseActivity() {
             permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
         
-        Log.d("MainActivity", "Requesting permissions: $permissionsToRequest")
-        
         if (permissionsToRequest.isNotEmpty()) {
             val requestCode = if (permissionsToRequest.contains(Manifest.permission.SEND_SMS)) {
                 SMS_PERMISSION_CODE
@@ -292,16 +271,11 @@ class MainActivity : BaseActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
-        Log.d("MainActivity", "Permission result - Code: $requestCode")
-        
         var allGranted = true
         for (i in grantResults.indices) {
             if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                 allGranted = false
                 showToast("Permission denied: ${permissions[i]}")
-                Log.d("MainActivity", "Permission denied: ${permissions[i]}")
-            } else {
-                Log.d("MainActivity", "Permission granted: ${permissions[i]}")
             }
         }
         
@@ -310,8 +284,6 @@ class MainActivity : BaseActivity() {
             if (requestCode == SMS_PERMISSION_CODE) {
                 startCountdown()
             }
-        } else {
-            showToast("Some permissions were denied. App may not work correctly.")
         }
     }
 
