@@ -28,20 +28,10 @@ class AudioRecorderHelper(private val context: Context) {
             val audioDir = getRecordingsDirectory()
             Log.d(TAG, "Recording directory: ${audioDir.absolutePath}")
             
-            // СОЗДАЕМ ПАПКУ С ПРОВЕРКОЙ
+            // 🔴 УПРОЩАЕМ: Для Android 10+ папка создается автоматически или mkdirs() всегда работает
             if (!audioDir.exists()) {
                 val created = audioDir.mkdirs()
-                Log.d(TAG, "Directory creation: $created")
-                if (!created) {
-                    Log.e(TAG, "❌ FAILED to create directory!")
-                    return false
-                }
-            }
-
-            // ПРОВЕРЯЕМ ЧТО ПАПКА СУЩЕСТВУЕТ И ДОСТУПНА
-            if (!audioDir.exists()) {
-                Log.e(TAG, "❌ Directory still doesn't exist after creation!")
-                return false
+                Log.d(TAG, "Directory creation attempted: $created")
             }
 
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
@@ -62,7 +52,6 @@ class AudioRecorderHelper(private val context: Context) {
                 }
             }
 
-            // ВАЖНО: правильная последовательность и обработка ошибок
             try {
                 mediaRecorder?.prepare()
                 mediaRecorder?.start()
@@ -105,20 +94,19 @@ class AudioRecorderHelper(private val context: Context) {
                 mediaRecorder = null
                 isRecording = false
 
-                // ПОДРОБНАЯ ПРОВЕРКА ФАЙЛА
+                // ПРОВЕРКА ФАЙЛА
                 val file = getRecordedFile()
                 if (file != null && file.exists()) {
                     val fileSize = file.length()
                     Log.d(TAG, "✅ Recording STOPPED successfully")
-                    Log.d(TAG, "✅ File exists: ${file.name}")
-                    Log.d(TAG, "✅ File size: $fileSize bytes")
-                    Log.d(TAG, "✅ Full path: ${file.absolutePath}")
+                    Log.d(TAG, "✅ File: ${file.name} (${fileSize} bytes)")
+                    Log.d(TAG, "✅ Path: ${file.absolutePath}")
                     true
                 } else {
                     Log.e(TAG, "❌ Recording stopped but FILE NOT FOUND!")
                     Log.e(TAG, "❌ Expected path: $currentFilePath")
                     
-                    // ДИАГНОСТИКА: проверяем что вообще есть в папке
+                    // ДИАГНОСТИКА
                     val dir = getRecordingsDirectory()
                     if (dir.exists()) {
                         val files = dir.listFiles()
@@ -163,10 +151,10 @@ class AudioRecorderHelper(private val context: Context) {
 
     fun getRecordingsDirectory(): File {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-            // Android 10+ - Scoped Storage
+            // Android 10+ - Scoped Storage (НЕ требует разрешения WRITE_EXTERNAL_STORAGE)
             File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "Security_app")
         } else {
-            // Android 9 и ниже - Traditional Storage
+            // Android 9 и ниже - Traditional Storage (требует разрешение)
             File(Environment.getExternalStorageDirectory(), "Security_app")
         }
     }
@@ -194,6 +182,7 @@ class AudioRecorderHelper(private val context: Context) {
         
         if (dir.exists()) {
             info.append("Can Read: ${dir.canRead()}\n")
+            // 🔴 УБИРАЕМ ПРОВЕРКУ Can Write для Android 10+ - она не нужна
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
                 info.append("Can Write: ${dir.canWrite()}\n")
             }
