@@ -51,45 +51,7 @@
             android:inputType="textPassword"
             android:layout_marginBottom="24dp" />
 
-        <!-- Mattermost Settings -->
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="@string/mattermost_settings"
-            android:textSize="18sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:layout_marginBottom="16dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Webhook URL:"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/mattermost_webhook"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/webhook_hint"
-            android:inputType="textUri"
-            android:layout_marginBottom="12dp" />
-
-        <TextView
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:text="Channel Name:"
-            android:textSize="14sp"
-            android:layout_marginBottom="4dp" />
-
-        <EditText
-            android:id="@+id/mattermost_channel"
-            android:layout_width="match_parent"
-            android:layout_height="wrap_content"
-            android:hint="@string/channel_hint"
-            android:layout_marginBottom="24dp" />
-
+       
         <!-- SMS Settings -->
         <TextView
             android:layout_width="match_parent"
