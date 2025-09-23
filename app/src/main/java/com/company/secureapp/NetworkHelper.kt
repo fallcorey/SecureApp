@@ -1,7 +1,11 @@
 package com.company.secureapp
 
 import android.content.Context
+import android.content.pm.PackageManager
+import android.net.ConnectivityManager
+import android.net.NetworkCapabilities
 import android.telephony.SmsManager
+import android.telephony.TelephonyManager
 import android.util.Log
 import okhttp3.*
 import okhttp3.MediaType.Companion.toMediaType
@@ -226,18 +230,69 @@ class NetworkHelper(private val context: Context) {
     }
 
     private fun hasSmsPermission(): Boolean {
-        return android.content.pm.PackageManager.PERMISSION_GRANTED == 
+        return PackageManager.PERMISSION_GRANTED == 
             context.checkSelfPermission(android.Manifest.permission.SEND_SMS)
     }
 
     fun isNetworkAvailable(): Boolean {
         return try {
-            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
-            val networkInfo = connectivityManager.activeNetworkInfo
-            networkInfo?.isConnectedOrConnecting == true
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M) {
+                val network = connectivityManager.activeNetwork
+                val capabilities = connectivityManager.getNetworkCapabilities(network)
+                capabilities != null && (
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) ||
+                    capabilities.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET)
+                )
+            } else {
+                val networkInfo = connectivityManager.activeNetworkInfo
+                networkInfo?.isConnectedOrConnecting == true
+            }
         } catch (e: Exception) {
             Log.e("NetworkHelper", "Error checking network: ${e.message}")
             false
+        }
+    }
+
+    // ДОБАВЛЕННЫЙ МЕТОД - информация о сети
+    fun getNetworkInfo(): String {
+        return try {
+            val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as ConnectivityManager
+            val telephonyManager = context.getSystemService(Context.TELEPHONY_SERVICE) as TelephonyManager
+            
+            val networkType = when {
+                android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.M -> {
+                    val network = connectivityManager.activeNetwork
+                    val capabilities = connectivityManager.getNetworkCapabilities(network)
+                    when {
+                        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_WIFI) == true -> "WiFi"
+                        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_CELLULAR) == true -> "Cellular"
+                        capabilities?.hasTransport(NetworkCapabilities.TRANSPORT_ETHERNET) == true -> "Ethernet"
+                        else -> "Unknown"
+                    }
+                }
+                else -> {
+                    val networkInfo = connectivityManager.activeNetworkInfo
+                    networkInfo?.typeName ?: "Unknown"
+                }
+            }
+            
+            val simState = when (telephonyManager.simState) {
+                TelephonyManager.SIM_STATE_READY -> "SIM Ready"
+                TelephonyManager.SIM_STATE_ABSENT -> "No SIM"
+                TelephonyManager.SIM_STATE_UNKNOWN -> "SIM Unknown"
+                else -> "SIM ${telephonyManager.simState}"
+            }
+            
+            val networkOperator = telephonyManager.networkOperatorName
+            val signalStrength = if (telephonyManager.isNetworkRoaming) "Roaming" else "Home"
+            
+            "Type: $networkType, Operator: $networkOperator, $signalStrength, $simState"
+            
+        } catch (e: Exception) {
+            Log.e("NetworkHelper", "Error getting network info: ${e.message}")
+            "Network info unavailable"
         }
     }
 
