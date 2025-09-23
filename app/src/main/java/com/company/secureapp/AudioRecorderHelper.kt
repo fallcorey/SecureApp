@@ -22,19 +22,15 @@ class AudioRecorderHelper(private val context: Context) {
     }
 
     fun startRecording(): Boolean {
-        // Останавливаем предыдущую запись, если она активна
         if (isRecording) {
+            Log.d(TAG, "Already recording, stopping first")
             stopRecording()
         }
 
         try {
-            // === ИСПРАВЛЕННЫЙ БЛОК: совместимость с Android 10+ ===
-            // Создаем папку для записей с учетом версии Android
             val audioDir = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
-                // Для Android 10+ используем scoped storage
                 File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "Security_app")
             } else {
-                // Для старых версий используем традиционный путь
                 File(Environment.getExternalStorageDirectory(), "Security_app")
             }
             
@@ -43,72 +39,43 @@ class AudioRecorderHelper(private val context: Context) {
                 Log.d(TAG, "Directory created: $created, path: ${audioDir.absolutePath}")
             }
 
-            // Проверяем доступность папки (только для Android < 10)
             if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && !audioDir.canWrite()) {
                 Log.e(TAG, "Cannot write to directory: ${audioDir.absolutePath}")
                 return false
             }
 
-            // Генерируем имя файла с timestamp
             val timeStamp = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.getDefault()).format(Date())
             val audioFile = File(audioDir, "emergency_$timeStamp.aac")
-            
             currentFilePath = audioFile.absolutePath
 
             Log.d(TAG, "Starting recording to: ${audioFile.absolutePath}")
 
-            // Создаем и настраиваем MediaRecorder
             mediaRecorder = MediaRecorder().apply {
-                // Шаг 1: Установка источника аудио
                 setAudioSource(MediaRecorder.AudioSource.MIC)
-                
-                // Шаг 2: Установка формата вывода
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
-                
-                // Шаг 3: Установка аудио кодека
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
-                
-                // Шаг 4: Установка файла вывода
                 setOutputFile(audioFile.absolutePath)
                 
-                // === ИСПРАВЛЕННЫЙ БЛОК: настройки для разных версий Android ===
-                // Дополнительные настройки для лучшего качества
                 if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
-                    setAudioSamplingRate(44100) // 44.1 kHz
-                    setAudioEncodingBitRate(128000) // 128 kbps
+                    setAudioSamplingRate(44100)
+                    setAudioEncodingBitRate(128000)
                 }
                 
-                // Шаг 5: Подготовка и старт
                 try {
                     prepare()
                     start()
                     isRecording = true
                     Log.d(TAG, "Recording started successfully")
                     return true
-                } catch (e: IllegalStateException) {
-                    Log.e(TAG, "IllegalStateException during preparation: ${e.message}")
-                    e.printStackTrace()
-                    return false
-                } catch (e: IOException) {
-                    Log.e(TAG, "IOException during preparation: ${e.message}")
-                    Log.e(TAG, "File path: ${audioFile.absolutePath}")
-                    Log.e(TAG, "File exists: ${audioFile.exists()}")
-                    Log.e(TAG, "Can write: ${audioFile.canWrite()}")
-                    e.printStackTrace()
-                    return false
                 } catch (e: Exception) {
-                    Log.e(TAG, "Unexpected exception during preparation: ${e.message}")
-                    e.printStackTrace()
+                    Log.e(TAG, "Error starting recording: ${e.message}")
+                    release()
                     return false
                 }
             }
             
-        } catch (e: SecurityException) {
-            Log.e(TAG, "SecurityException: No permission to record audio")
-            return false
         } catch (e: Exception) {
             Log.e(TAG, "General exception: ${e.message}")
-            e.printStackTrace()
             return false
         }
     }
@@ -122,14 +89,12 @@ class AudioRecorderHelper(private val context: Context) {
                         stop()
                     } catch (e: Exception) {
                         Log.e(TAG, "Error stopping MediaRecorder: ${e.message}")
-                        // Продолжаем выполнение даже при ошибке остановки
                     }
                     release()
                 }
                 mediaRecorder = null
                 isRecording = false
                 
-                // Проверяем, создался ли файл
                 val file = getRecordedFile()
                 if (file != null && file.exists()) {
                     val fileSize = file.length()
@@ -145,7 +110,6 @@ class AudioRecorderHelper(private val context: Context) {
             }
         } catch (e: Exception) {
             Log.e(TAG, "Exception in stopRecording: ${e.message}")
-            e.printStackTrace()
             false
         }
     }
@@ -168,7 +132,6 @@ class AudioRecorderHelper(private val context: Context) {
     }
 
     fun getRecordingsDirectory(): File {
-        // === ИСПРАВЛЕННЫЙ МЕТОД: совместимость с Android 10+ ===
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
             File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "Security_app")
         } else {
@@ -183,33 +146,5 @@ class AudioRecorderHelper(private val context: Context) {
         } else {
             emptyList()
         }
-    }
-
-    fun getRecordingStatus(): String {
-        return if (isRecording) {
-            "Recording active to: ${currentFilePath}"
-        } else {
-            "Not recording"
-        }
-    }
-
-    // Метод для отладки - проверяет доступность записи
-    fun checkRecordingCapability(): String {
-        val dir = getRecordingsDirectory()
-        val capabilities = StringBuilder()
-        
-        capabilities.append("Directory: ${dir.absolutePath}\n")
-        capabilities.append("Exists: ${dir.exists()}\n")
-        capabilities.append("Android Version: ${Build.VERSION.SDK_INT}\n")
-        
-        // Проверка записи только для старых версий Android
-        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
-            capabilities.append("Can write: ${dir.canWrite()}\n")
-            capabilities.append("Free space: ${dir.freeSpace / (1024 * 1024)} MB\n")
-        } else {
-            capabilities.append("Using scoped storage (Android 10+)\n")
-        }
-        
-        return capabilities.toString()
     }
 }
