@@ -31,8 +31,6 @@ class SettingsActivity : BaseActivity() {
         recordingTimeSpinner = findViewById<Spinner>(R.id.recording_time_spinner)
         val serverUrl = findViewById<EditText>(R.id.server_url)
         val serverAuthToken = findViewById<EditText>(R.id.server_auth_token)
-        val mattermostWebhook = findViewById<EditText>(R.id.mattermost_webhook)
-        val mattermostChannel = findViewById<EditText>(R.id.mattermost_channel)
         val smsNumber = findViewById<EditText>(R.id.sms_number)
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
@@ -42,7 +40,7 @@ class SettingsActivity : BaseActivity() {
         setupRecordingTimeSpinner()
 
         // Загружаем сохраненные настройки
-        loadSavedSettings(serverUrl, serverAuthToken, mattermostWebhook, mattermostChannel, smsNumber, userName, userPhone)
+        loadSavedSettings(serverUrl, serverAuthToken, smsNumber, userName, userPhone)
 
         // Обработчик выбора языка
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
@@ -65,18 +63,16 @@ class SettingsActivity : BaseActivity() {
         }
 
         saveButton.setOnClickListener {
-            saveSettings(serverUrl, serverAuthToken, mattermostWebhook, mattermostChannel, smsNumber, userName, userPhone)
+            saveSettings(serverUrl, serverAuthToken, smsNumber, userName, userPhone)
         }
     }
 
     private fun loadSavedSettings(
-        serverUrl: EditText, serverAuthToken: EditText, mattermostWebhook: EditText,
-        mattermostChannel: EditText, smsNumber: EditText, userName: EditText, userPhone: EditText
+        serverUrl: EditText, serverAuthToken: EditText, 
+        smsNumber: EditText, userName: EditText, userPhone: EditText
     ) {
         serverUrl.setText(preferenceHelper.getString("server_url", ""))
         serverAuthToken.setText(preferenceHelper.getString("server_auth_token", ""))
-        mattermostWebhook.setText(preferenceHelper.getString("mattermost_webhook", ""))
-        mattermostChannel.setText(preferenceHelper.getString("mattermost_channel", ""))
         smsNumber.setText(preferenceHelper.getString("sms_number", ""))
         userName.setText(preferenceHelper.getString("user_name", ""))
         userPhone.setText(preferenceHelper.getString("user_phone", ""))
@@ -100,13 +96,11 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun saveSettings(
-        serverUrl: EditText, serverAuthToken: EditText, mattermostWebhook: EditText,
-        mattermostChannel: EditText, smsNumber: EditText, userName: EditText, userPhone: EditText
+        serverUrl: EditText, serverAuthToken: EditText, 
+        smsNumber: EditText, userName: EditText, userPhone: EditText
     ) {
         val serverUrlText = serverUrl.text.toString().trim()
         val serverAuthTokenText = serverAuthToken.text.toString().trim()
-        val mattermostWebhookText = mattermostWebhook.text.toString().trim()
-        val mattermostChannelText = mattermostChannel.text.toString().trim()
         val smsNumberText = smsNumber.text.toString().trim()
         val userNameText = userName.text.toString().trim()
         val userPhoneText = userPhone.text.toString().trim()
@@ -117,9 +111,9 @@ class SettingsActivity : BaseActivity() {
             return
         }
 
-        // 🔴 ДОБАВЛЕНА ПРОВЕРКА: Должен быть указан хотя бы один способ оповещения
-        if (smsNumberText.isBlank() && serverUrlText.isBlank() && mattermostWebhookText.isBlank()) {
-            showToast("Please set at least one alert method: SMS number, Server URL, or Mattermost Webhook")
+        // Проверяем что указан хотя бы один способ оповещения
+        if (smsNumberText.isBlank() && serverUrlText.isBlank()) {
+            showToast("Please set at least one alert method: SMS number or Server URL")
             return
         }
 
@@ -127,8 +121,6 @@ class SettingsActivity : BaseActivity() {
             // Сохраняем все настройки
             preferenceHelper.saveString("server_url", serverUrlText)
             preferenceHelper.saveString("server_auth_token", serverAuthTokenText)
-            preferenceHelper.saveString("mattermost_webhook", mattermostWebhookText)
-            preferenceHelper.saveString("mattermost_channel", mattermostChannelText)
             preferenceHelper.saveString("sms_number", smsNumberText)
             preferenceHelper.saveString("user_name", userNameText)
             preferenceHelper.saveString("user_phone", userPhoneText)
@@ -138,7 +130,7 @@ class SettingsActivity : BaseActivity() {
             val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
             preferenceHelper.saveString("recording_time", selectedRecordingTime)
 
-            // 🔴 ДОБАВЛЕНО: Показываем статус записи аудио
+            // Показываем статус записи аудио
             val recordingTime = selectedRecordingTime.toLongOrNull() ?: 30000
             val audioStatusMessage = if (recordingTime == 0L) {
                 "Audio recording DISABLED (0 seconds)"
@@ -162,7 +154,6 @@ class SettingsActivity : BaseActivity() {
     }
 
     private fun restartApp() {
-        // Просто завершаем активность - MainActivity автоматически перезапустится с новым языком
         finish()
     }
 
