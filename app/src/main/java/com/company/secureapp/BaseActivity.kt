@@ -3,95 +3,72 @@ package com.company.secureapp
 import android.content.Context
 import android.content.res.Configuration
 import android.content.res.Resources
-import android.os.Build
 import android.os.Bundle
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
-import java.util.Locale
+import java.util.*
 
 open class BaseActivity : AppCompatActivity() {
 
-    override fun attachBaseContext(newBase: Context) {
-        super.attachBaseContext(updateLocale(newBase))
-    }
-
-    private fun updateLocale(context: Context): Context {
-        val preferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val language = preferences.getString("selected_language", "en") ?: "en"
-        return setLocale(context, language)
-    }
-
-    private fun setLocale(context: Context, language: String): Context {
-        val locale = Locale(language)
-        Locale.setDefault(locale)
-
-        val resources: Resources = context.resources
-        val configuration: Configuration = resources.configuration
-
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            configuration.setLocale(locale)
-        } else {
-            configuration.locale = locale
-        }
-
-        return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.N) {
-            context.createConfigurationContext(configuration)
-        } else {
-            resources.updateConfiguration(configuration, resources.displayMetrics)
-            context
-        }
+    override fun attachBaseContext(newBase: Context): Context {
+        // Применяем сохраненный язык к контексту
+        return updateBaseContextLocale(super.attachBaseContext(newBase))
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        // Применяем язык при создании активности
-        applyLanguage()
+        // Обновляем язык для активити
+        updateActivityLocale()
     }
 
-    private fun applyLanguage() {
-        val preferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        val language = preferences.getString("selected_language", "en") ?: "en"
-        
-        val resources: Resources = resources
-        val configuration: Configuration = resources.configuration
-        val locale = Locale(language)
+    // ОБНОВЛЯЕМ ЛОКАЛЬ ДЛЯ АКТИВНОСТИ
+    private fun updateActivityLocale() {
+        val sharedPreferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val languageCode = sharedPreferences.getString("selected_language", "en") ?: "en"
+        val locale = Locale(languageCode)
         Locale.setDefault(locale)
         
-        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.JELLY_BEAN_MR1) {
-            configuration.setLocale(locale)
-        } else {
-            configuration.locale = locale
-        }
+        val resources = resources
+        val configuration = Configuration(resources.configuration)
+        configuration.setLocale(locale)
         
         resources.updateConfiguration(configuration, resources.displayMetrics)
     }
 
-    fun changeLanguage(languageCode: String) {
-        // Сохраняем выбранный язык
-        val preferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
-        preferences.edit().putString("selected_language", languageCode).apply()
+    // ОБНОВЛЯЕМ КОНТЕКСТ С ЛОКАЛЬЮ
+    private fun updateBaseContextLocale(context: Context): Context {
+        val sharedPreferences = context.getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        val languageCode = sharedPreferences.getString("selected_language", "en") ?: "en"
+        val locale = Locale(languageCode)
+        Locale.setDefault(locale)
         
-        // Немедленно применяем изменения языка
-        applyLanguage()
+        val configuration = context.resources.configuration
+        configuration.setLocale(locale)
         
-        // Обновляем контент активности
-        recreate()
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.JELLY_BEAN_MR1) {
+            context.createConfigurationContext(configuration)
+        } else {
+            context
+        }
     }
 
-    // Вспомогательные методы для Toast
     protected fun showToast(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
+        Toast.makeText(this, message, Toast.LENGTH_SHORT).show()
     }
 
-    protected fun showToast(stringResId: Int) {
-        Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
+    protected fun showToast(resId: Int) {
+        Toast.makeText(this, resId, Toast.LENGTH_SHORT).show()
     }
 
-    protected fun showError(message: String) {
-        Toast.makeText(this, message, Toast.LENGTH_LONG).show()
-    }
-
-    protected fun showError(stringResId: Int) {
-        Toast.makeText(this, getString(stringResId), Toast.LENGTH_LONG).show()
+    // МЕТОД ДЛЯ СМЕНЫ ЯЗЫКА (ДЛЯ СОВМЕСТИМОСТИ)
+    protected fun changeLanguage(languageCode: String) {
+        val sharedPreferences = getSharedPreferences("AppPreferences", Context.MODE_PRIVATE)
+        sharedPreferences.edit().putString("selected_language", languageCode).apply()
+        
+        // Применяем язык через Application
+        (application as? SecureApp)?.setAppLocale(languageCode)
+        
+        // Перезапускаем активити
+        recreate()
     }
 }
