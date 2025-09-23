@@ -31,7 +31,6 @@ class MainActivity : BaseActivity() {
     private var isEmergencyActive = false
     private val handler = Handler(Looper.getMainLooper())
 
-    // Методы проверки разрешений
     private fun checkSmsPermission(): Boolean {
         return ActivityCompat.checkSelfPermission(this, Manifest.permission.SEND_SMS) == PackageManager.PERMISSION_GRANTED
     }
@@ -46,16 +45,14 @@ class MainActivity : BaseActivity() {
     }
 
     private fun checkStoragePermission(): Boolean {
-        // Для Android 10+ WRITE_EXTERNAL_STORAGE не всегда требуется
         return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
-            true // На Android 10+ разрешение не требуется для папки приложения
+            true
         } else {
             ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
         }
     }
 
     private fun checkAllPermissions(): Boolean {
-        // Для SMS обязательно, для storage - условно
         val smsPerm = checkSmsPermission()
         val audioPerm = checkAudioPermission()
         val locationPerm = checkLocationPermission()
@@ -75,16 +72,13 @@ class MainActivity : BaseActivity() {
         locationHelper = LocationHelper(this)
         networkHelper = NetworkHelper(this)
 
-        // Диагностика записи аудио
         debugAudioRecording()
 
-        // Находим элементы
         sosButton = findViewById(R.id.sos_button)
         timerText = findViewById(R.id.timer_text)
         statusText = findViewById(R.id.status_text)
         settingsButton = findViewById(R.id.settings_button)
 
-        // Устанавливаем тексты
         sosButton.text = "SOS"
         settingsButton.text = getString(R.string.settings_button)
 
@@ -111,12 +105,10 @@ class MainActivity : BaseActivity() {
         Log.d("MainActivity", "Audio permission: ${checkAudioPermission()}")
         Log.d("MainActivity", "Storage permission: ${checkStoragePermission()}")
         
-        // Проверяем методы audioRecorder
         try {
             Log.d("MainActivity", "Recording status: ${audioRecorder.isRecording()}")
             Log.d("MainActivity", "Recordings directory: ${audioRecorder.getRecordingsDirectory()}")
             
-            // Проверяем существующие записи
             val recordings = audioRecorder.getAllRecordings()
             Log.d("MainActivity", "Existing recordings: ${recordings.size}")
             recordings.forEach { file ->
@@ -127,7 +119,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // Таймер обратного отсчета 3 секунды
     private fun startCountdown() {
         isEmergencyActive = true
         sosButton.text = "CANCEL"
@@ -150,7 +141,6 @@ class MainActivity : BaseActivity() {
         }.start()
     }
 
-    // Отмена экстренного режима
     private fun cancelEmergency() {
         isEmergencyActive = false
         countDownTimer?.cancel()
@@ -158,7 +148,6 @@ class MainActivity : BaseActivity() {
         showToast(R.string.emergency_cancelled)
     }
 
-    // Сброс UI к исходному состоянию
     private fun resetUI() {
         sosButton.text = "SOS"
         sosButton.setBackgroundResource(R.drawable.sos_button_background)
@@ -166,7 +155,6 @@ class MainActivity : BaseActivity() {
         statusText.visibility = View.GONE
     }
 
-    // Основная процедура экстренного оповещения с интеллектуальной отправкой
     private fun startEmergencyProcedure() {
         statusText.text = "Sending emergency alert..."
         
@@ -176,28 +164,24 @@ class MainActivity : BaseActivity() {
             val serverUrl = preferenceHelper.getString("server_url", "")
             val authToken = preferenceHelper.getString("server_auth_token", "")
             
-            // Проверяем, есть ли хотя бы один способ отправки
             if (savedSmsNumber.isBlank() && serverUrl.isBlank()) {
                 showToast("Please configure SMS number or server URL in settings")
                 resetUI()
                 return
             }
 
-            // Проверяем критически важные разрешения
             if (!checkSmsPermission() && savedSmsNumber.isNotBlank()) {
                 showToast("SMS permission required for emergency alerts")
                 resetUI()
                 return
             }
 
-            // Получаем настройку времени записи
             val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
 
-            // Получаем локацию и информацию о сети
+            // ИСПРАВЛЕННАЯ СТРОКА: используем networkHelper.getNetworkInfo()
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            // Начинаем запись звука (если есть разрешение)
             val isRecording = if (checkAudioPermission()) {
                 audioRecorder.startRecording()
             } else {
@@ -205,9 +189,10 @@ class MainActivity : BaseActivity() {
             }
             Log.d("MainActivity", "Audio recording started: $isRecording")
 
-            // ОТПРАВКА С ПРИОРИТЕТАМИ В ОТДЕЛЬНОМ ПОТОКЕ
             Thread {
                 try {
+                    Log.d("MainActivity", "Starting alert in background thread")
+                    
                     val alertResult = networkHelper.sendEmergencyAlert(
                         userName = savedUserName,
                         userPhone = preferenceHelper.getString("user_phone", ""),
@@ -220,26 +205,26 @@ class MainActivity : BaseActivity() {
                         smsNumber = savedSmsNumber
                     )
                     
-                    // Обновляем UI в главном потоке
+                    Log.d("MainActivity", "Alert result: ${alertResult.success}")
+                    alertResult.messages.forEach { message ->
+                        Log.d("MainActivity", "Alert step: $message")
+                    }
+                    
                     runOnUiThread {
                         if (alertResult.success) {
                             statusText.text = "Emergency alert sent!"
                             showToast("Alert delivered! ${alertResult.details}")
-                            Log.d("MainActivity", "Alert success: ${alertResult.messages}")
                         } else {
                             statusText.text = "Failed to send alert"
-                            showToast("Failed to send alert. Check settings and permissions.")
-                            Log.e("MainActivity", "Alert failed: ${alertResult.messages}")
-                        }
-                        
-                        // Показываем детали отправки в логах
-                        alertResult.messages.forEach { message ->
-                            Log.d("MainActivity", "Alert step: $message")
+                            showToast("Failed: ${alertResult.details}")
+                            alertResult.messages.forEach { message ->
+                                Log.e("MainActivity", "FAILED: $message")
+                            }
                         }
                     }
                     
                 } catch (e: Exception) {
-                    Log.e("MainActivity", "Alert thread error: ${e.message}")
+                    Log.e("MainActivity", "Background thread error: ${e.message}")
                     runOnUiThread {
                         statusText.text = "Error occurred"
                         showToast("Error: ${e.message}")
@@ -247,23 +232,18 @@ class MainActivity : BaseActivity() {
                 }
             }.start()
 
-            // Останавливаем запись через заданное время
             if (isRecording) {
                 handler.postDelayed({
                     val stopped = audioRecorder.stopRecording()
-                    val filePath = audioRecorder.getRecordedFilePath()
                     val file = audioRecorder.getRecordedFile()
                     Log.d("MainActivity", "Recording stopped: $stopped")
                     
                     if (file != null && file.exists()) {
                         Log.d("MainActivity", "Recording saved: ${file.name} (${file.length()} bytes)")
-                    } else {
-                        Log.e("MainActivity", "Recording file not found: $filePath")
                     }
                 }, recordingTime)
             }
             
-            // Автоматический сброс через 5 секунд
             handler.postDelayed({
                 resetUI()
                 isEmergencyActive = false
@@ -278,19 +258,12 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    private fun stopRecording() {
-        val stopped = audioRecorder.stopRecording()
-        Log.d("MainActivity", "Recording stopped: $stopped")
-    }
-
-    // Запрос всех разрешений
     private fun requestAllPermissions() {
         val permissionsToRequest = mutableListOf<String>()
         
         if (!checkSmsPermission()) permissionsToRequest.add(Manifest.permission.SEND_SMS)
         if (!checkAudioPermission()) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
         
-        // Для Android 9 и ниже запрашиваем storage permission
         if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
             if (!checkStoragePermission()) {
                 permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
@@ -306,7 +279,6 @@ class MainActivity : BaseActivity() {
         Log.d("MainActivity", "Requesting permissions: $permissionsToRequest")
         
         if (permissionsToRequest.isNotEmpty()) {
-            // Используем разные коды для разных типов разрешений
             val requestCode = if (permissionsToRequest.contains(Manifest.permission.SEND_SMS)) {
                 SMS_PERMISSION_CODE
             } else {
@@ -317,7 +289,6 @@ class MainActivity : BaseActivity() {
         }
     }
 
-    // Обработка разрешений
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
