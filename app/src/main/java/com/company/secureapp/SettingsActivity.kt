@@ -144,11 +144,8 @@ class SettingsActivity : BaseActivity() {
             // Сохраняем язык
             sharedPreferences.edit().putString("selected_language", languageCode).apply()
             
-            // Применяем язык ко всему приложению
-            (application as? SecureApp)?.setAppLocale(languageCode)
-            
-            // Перезагружаем текущую активити
-            recreate()
+            // Используем метод из BaseActivity для смены языка
+            changeLanguage(languageCode)
             
         } catch (e: Exception) {
             showToast("Error changing language")
