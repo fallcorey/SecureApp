@@ -19,7 +19,6 @@ class NetworkHelper(private val context: Context) {
 
     data class AlertResult(val success: Boolean, val messages: List<String>, val details: String = "")
 
-    // ОСНОВНОЙ ИСПРАВЛЕННЫЙ МЕТОД
     fun sendEmergencyAlert(
         userName: String,
         userPhone: String,
@@ -41,14 +40,12 @@ class NetworkHelper(private val context: Context) {
             Log.d("NetworkHelper", "SMS number provided: ${smsNumber.isNotBlank()}")
             Log.d("NetworkHelper", "SMS permission: ${hasSmsPermission()}")
 
-            // ВАЖНО: SMS должны иметь ВЫСШИЙ ПРИОРИТЕТ при отсутствии интернета
             val networkAvailable = isNetworkAvailable()
             
             if (!networkAvailable) {
                 Log.d("NetworkHelper", "No network - attempting SMS only")
                 messages.add("Network: Unavailable")
                 
-                // ПРИ ОТКЛЮЧЕННОМ ИНТЕРНЕТЕ - ПЫТАЕМСЯ ОТПРАВИТЬ SMS СРАЗУ
                 if (smsNumber.isNotBlank() && hasSmsPermission()) {
                     val smsMessage = createEmergencyMessage(userName, userPhone, locationInfo, networkInfo, audioRecorded)
                     val smsResult = sendEmergencySMS(smsNumber, smsMessage)
@@ -80,7 +77,6 @@ class NetworkHelper(private val context: Context) {
                 var serverSuccess = false
                 var smsSuccess = false
                 
-                // Пытаемся отправить на сервер (если есть URL)
                 if (serverUrl.isNotBlank()) {
                     val serverResult = sendToServer(userName, userPhone, locationInfo, networkInfo, 
                         audioRecorded, recordingTime, serverUrl, authToken)
@@ -97,7 +93,6 @@ class NetworkHelper(private val context: Context) {
                     messages.add("Server: Not configured")
                 }
                 
-                // Пытаемся отправить SMS (параллельно или как fallback)
                 if (smsNumber.isNotBlank() && hasSmsPermission()) {
                     val smsMessage = createEmergencyMessage(userName, userPhone, locationInfo, networkInfo, audioRecorded)
                     val smsResult = sendEmergencySMS(smsNumber, smsMessage)
@@ -133,25 +128,21 @@ class NetworkHelper(private val context: Context) {
         return AlertResult(success, messages, details)
     }
 
-    // Улучшенный метод отправки SMS
     private fun sendEmergencySMS(phoneNumber: String, message: String): AlertResult {
         return try {
             Log.d("NetworkHelper", "Attempting to send SMS to: $phoneNumber")
             Log.d("NetworkHelper", "SMS message length: ${message.length}")
             
-            // Проверяем номер телефона
             if (phoneNumber.isBlank() || phoneNumber.length < 5) {
                 return AlertResult(false, listOf(), "Invalid phone number")
             }
             
-            // Проверяем разрешение
             if (!hasSmsPermission()) {
                 return AlertResult(false, listOf(), "No SMS permission")
             }
             
             val smsManager = SmsManager.getDefault()
             
-            // Разбиваем длинное сообщение на части
             if (message.length > 160) {
                 val parts = smsManager.divideMessage(message)
                 smsManager.sendMultipartTextMessage(phoneNumber, null, parts, null, null)
@@ -175,13 +166,70 @@ class NetworkHelper(private val context: Context) {
         }
     }
 
-    // Проверка разрешения SMS (должна быть в MainActivity)
+    private fun sendToServer(
+        userName: String,
+        userPhone: String,
+        locationInfo: String,
+        networkInfo: String,
+        audioRecorded: Boolean,
+        recordingTime: Long,
+        serverUrl: String,
+        authToken: String
+    ): AlertResult {
+        return try {
+            Log.d("NetworkHelper", "Sending to server: $serverUrl")
+            
+            val json = """
+                {
+                    "userName": "$userName",
+                    "userPhone": "$userPhone",
+                    "locationInfo": "$locationInfo",
+                    "networkInfo": "$networkInfo",
+                    "audioRecorded": $audioRecorded,
+                    "recordingTime": $recordingTime,
+                    "timestamp": "${System.currentTimeMillis()}"
+                }
+            """.trimIndent()
+
+            val mediaType = "application/json; charset=utf-8".toMediaType()
+            val body = json.toRequestBody(mediaType)
+
+            val requestBuilder = Request.Builder()
+                .url(serverUrl)
+                .post(body)
+                .addHeader("Content-Type", "application/json")
+
+            if (authToken.isNotBlank()) {
+                requestBuilder.addHeader("Authorization", "Bearer $authToken")
+            }
+
+            val request = requestBuilder.build()
+
+            val response = client.newCall(request).execute()
+            val responseBody = response.body?.string() ?: ""
+
+            if (response.isSuccessful) {
+                Log.d("NetworkHelper", "Server response success: $responseBody")
+                AlertResult(true, listOf(), "Server: HTTP ${response.code}")
+            } else {
+                Log.e("NetworkHelper", "Server response error: ${response.code} - $responseBody")
+                AlertResult(false, listOf(), "Server error: HTTP ${response.code}")
+            }
+
+        } catch (e: IOException) {
+            Log.e("NetworkHelper", "IOException sending to server: ${e.message}")
+            AlertResult(false, listOf(), "Network error: ${e.message}")
+        } catch (e: Exception) {
+            Log.e("NetworkHelper", "Exception sending to server: ${e.message}")
+            AlertResult(false, listOf(), "Server error: ${e.message}")
+        }
+    }
+
     private fun hasSmsPermission(): Boolean {
         return android.content.pm.PackageManager.PERMISSION_GRANTED == 
             context.checkSelfPermission(android.Manifest.permission.SEND_SMS)
     }
 
-    // Проверка доступности сети
     fun isNetworkAvailable(): Boolean {
         return try {
             val connectivityManager = context.getSystemService(Context.CONNECTIVITY_SERVICE) as android.net.ConnectivityManager
@@ -193,7 +241,6 @@ class NetworkHelper(private val context: Context) {
         }
     }
 
-    // Создание сообщения для SMS
     private fun createEmergencyMessage(
         userName: String,
         userPhone: String,
@@ -210,10 +257,5 @@ class NetworkHelper(private val context: Context) {
             Audio: ${if (audioRecorded) "Recorded" else "Not available"}
             Time: ${java.text.SimpleDateFormat("yyyy-MM-dd HH:mm:ss", java.util.Locale.getDefault()).format(java.util.Date())}
             """.trimIndent()
-    }
-
-    // Метод отправки на сервер (без изменений)
-    private fun sendToServer(...): AlertResult {
-        // ... существующий код ...
     }
 }
