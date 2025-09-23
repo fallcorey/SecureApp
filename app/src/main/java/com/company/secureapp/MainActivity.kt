@@ -20,6 +20,7 @@ class MainActivity : BaseActivity() {
     private lateinit var locationHelper: LocationHelper
     private lateinit var networkHelper: NetworkHelper
     private val SMS_PERMISSION_CODE = 1001
+    private val STORAGE_PERMISSION_CODE = 1002
     
     private lateinit var sosButton: Button
     private lateinit var timerText: TextView
@@ -45,11 +46,24 @@ class MainActivity : BaseActivity() {
     }
 
     private fun checkStoragePermission(): Boolean {
-        return ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+        // Для Android 10+ WRITE_EXTERNAL_STORAGE не всегда требуется
+        return if (android.os.Build.VERSION.SDK_INT >= android.os.Build.VERSION_CODES.Q) {
+            true // На Android 10+ разрешение не требуется для папки приложения
+        } else {
+            ActivityCompat.checkSelfPermission(this, Manifest.permission.WRITE_EXTERNAL_STORAGE) == PackageManager.PERMISSION_GRANTED
+        }
     }
 
     private fun checkAllPermissions(): Boolean {
-        return checkSmsPermission() && checkAudioPermission() && checkLocationPermission() && checkStoragePermission()
+        // Для SMS обязательно, для storage - условно
+        val smsPerm = checkSmsPermission()
+        val audioPerm = checkAudioPermission()
+        val locationPerm = checkLocationPermission()
+        val storagePerm = checkStoragePermission()
+        
+        Log.d("MainActivity", "Permissions - SMS: $smsPerm, Audio: $audioPerm, Location: $locationPerm, Storage: $storagePerm")
+        
+        return smsPerm && audioPerm && locationPerm && storagePerm
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -169,6 +183,13 @@ class MainActivity : BaseActivity() {
                 return
             }
 
+            // Проверяем критически важные разрешения
+            if (!checkSmsPermission() && savedSmsNumber.isNotBlank()) {
+                showToast("SMS permission required for emergency alerts")
+                resetUI()
+                return
+            }
+
             // Получаем настройку времени записи
             val recordingTime = preferenceHelper.getString("recording_time", "30000").toLongOrNull() ?: 30000
 
@@ -176,8 +197,12 @@ class MainActivity : BaseActivity() {
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            // Начинаем запись звука
-            val isRecording = audioRecorder.startRecording()
+            // Начинаем запись звука (если есть разрешение)
+            val isRecording = if (checkAudioPermission()) {
+                audioRecorder.startRecording()
+            } else {
+                false
+            }
             Log.d("MainActivity", "Audio recording started: $isRecording")
 
             // ОТПРАВКА С ПРИОРИТЕТАМИ В ОТДЕЛЬНОМ ПОТОКЕ
@@ -203,7 +228,7 @@ class MainActivity : BaseActivity() {
                             Log.d("MainActivity", "Alert success: ${alertResult.messages}")
                         } else {
                             statusText.text = "Failed to send alert"
-                            showToast("Failed to send alert. Check settings.")
+                            showToast("Failed to send alert. Check settings and permissions.")
                             Log.e("MainActivity", "Alert failed: ${alertResult.messages}")
                         }
                         
@@ -264,7 +289,15 @@ class MainActivity : BaseActivity() {
         
         if (!checkSmsPermission()) permissionsToRequest.add(Manifest.permission.SEND_SMS)
         if (!checkAudioPermission()) permissionsToRequest.add(Manifest.permission.RECORD_AUDIO)
-        if (!checkStoragePermission()) permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+        
+        // Для Android 9 и ниже запрашиваем storage permission
+        if (android.os.Build.VERSION.SDK_INT < android.os.Build.VERSION_CODES.Q) {
+            if (!checkStoragePermission()) {
+                permissionsToRequest.add(Manifest.permission.WRITE_EXTERNAL_STORAGE)
+                permissionsToRequest.add(Manifest.permission.READ_EXTERNAL_STORAGE)
+            }
+        }
+        
         if (!checkLocationPermission()) {
             permissionsToRequest.add(Manifest.permission.ACCESS_FINE_LOCATION)
             permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
@@ -273,7 +306,14 @@ class MainActivity : BaseActivity() {
         Log.d("MainActivity", "Requesting permissions: $permissionsToRequest")
         
         if (permissionsToRequest.isNotEmpty()) {
-            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), SMS_PERMISSION_CODE)
+            // Используем разные коды для разных типов разрешений
+            val requestCode = if (permissionsToRequest.contains(Manifest.permission.SEND_SMS)) {
+                SMS_PERMISSION_CODE
+            } else {
+                STORAGE_PERMISSION_CODE
+            }
+            
+            ActivityCompat.requestPermissions(this, permissionsToRequest.toTypedArray(), requestCode)
         }
     }
 
@@ -281,21 +321,26 @@ class MainActivity : BaseActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
-        if (requestCode == SMS_PERMISSION_CODE) {
-            var allGranted = true
-            for (i in grantResults.indices) {
-                if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
-                    allGranted = false
-                    showToast("Permission denied: ${permissions[i]}")
-                    Log.d("MainActivity", "Permission denied: ${permissions[i]}")
-                } else {
-                    Log.d("MainActivity", "Permission granted: ${permissions[i]}")
-                }
+        Log.d("MainActivity", "Permission result - Code: $requestCode")
+        
+        var allGranted = true
+        for (i in grantResults.indices) {
+            if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
+                allGranted = false
+                showToast("Permission denied: ${permissions[i]}")
+                Log.d("MainActivity", "Permission denied: ${permissions[i]}")
+            } else {
+                Log.d("MainActivity", "Permission granted: ${permissions[i]}")
             }
-            if (allGranted) {
-                showToast("All permissions granted!")
+        }
+        
+        if (allGranted) {
+            showToast("All permissions granted!")
+            if (requestCode == SMS_PERMISSION_CODE) {
                 startCountdown()
             }
+        } else {
+            showToast("Some permissions were denied. App may not work correctly.")
         }
     }
 
@@ -313,5 +358,3 @@ class MainActivity : BaseActivity() {
         handler.removeCallbacksAndMessages(null)
     }
 }
-
-// ⚠️ УДАЛИТЕ ЭТОТ БЛОК - AlertResult теперь в отдельном файле
