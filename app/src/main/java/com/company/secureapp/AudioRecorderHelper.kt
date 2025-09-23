@@ -28,17 +28,19 @@ class AudioRecorderHelper(private val context: Context) {
             val audioDir = getRecordingsDirectory()
             Log.d(TAG, "Recording directory: ${audioDir.absolutePath}")
             
+            // СОЗДАЕМ ПАПКУ С ПРОВЕРКОЙ
             if (!audioDir.exists()) {
                 val created = audioDir.mkdirs()
-                Log.d(TAG, "Directory created: $created")
+                Log.d(TAG, "Directory creation: $created")
                 if (!created) {
-                    Log.e(TAG, "Failed to create directory")
+                    Log.e(TAG, "❌ FAILED to create directory!")
                     return false
                 }
             }
 
-            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q && !audioDir.canWrite()) {
-                Log.e(TAG, "No write permission to directory")
+            // ПРОВЕРЯЕМ ЧТО ПАПКА СУЩЕСТВУЕТ И ДОСТУПНА
+            if (!audioDir.exists()) {
+                Log.e(TAG, "❌ Directory still doesn't exist after creation!")
                 return false
             }
 
@@ -46,11 +48,9 @@ class AudioRecorderHelper(private val context: Context) {
             val audioFile = File(audioDir, "emergency_$timeStamp.aac")
             currentFilePath = audioFile.absolutePath
 
-            Log.d(TAG, "Creating file: ${audioFile.absolutePath}")
+            Log.d(TAG, "Attempting to create file: ${audioFile.absolutePath}")
 
-            mediaRecorder = MediaRecorder()
-            
-            mediaRecorder?.apply {
+            mediaRecorder = MediaRecorder().apply {
                 setAudioSource(MediaRecorder.AudioSource.MIC)
                 setOutputFormat(MediaRecorder.OutputFormat.MPEG_4)
                 setAudioEncoder(MediaRecorder.AudioEncoder.AAC)
@@ -62,21 +62,25 @@ class AudioRecorderHelper(private val context: Context) {
                 }
             }
 
-            return try {
+            // ВАЖНО: правильная последовательность и обработка ошибок
+            try {
                 mediaRecorder?.prepare()
                 mediaRecorder?.start()
                 isRecording = true
                 Log.d(TAG, "✅ Recording STARTED successfully")
-                true
+                Log.d(TAG, "✅ File should be at: $currentFilePath")
+                return true
             } catch (e: Exception) {
-                Log.e(TAG, "❌ Error starting recording: ${e.message}")
+                Log.e(TAG, "❌ Error during recording start: ${e.message}")
+                e.printStackTrace()
                 mediaRecorder?.release()
                 mediaRecorder = null
-                false
+                return false
             }
             
         } catch (e: Exception) {
-            Log.e(TAG, "❌ General exception: ${e.message}")
+            Log.e(TAG, "❌ General exception in startRecording: ${e.message}")
+            e.printStackTrace()
             return false
         }
     }
@@ -85,46 +89,84 @@ class AudioRecorderHelper(private val context: Context) {
         return try {
             if (isRecording && mediaRecorder != null) {
                 Log.d(TAG, "Stopping recording...")
+                
                 mediaRecorder?.apply {
                     try {
                         stop()
                     } catch (e: Exception) {
-                        Log.e(TAG, "Error stopping: ${e.message}")
+                        Log.e(TAG, "Error stopping MediaRecorder: ${e.message}")
                     }
-                    release()
+                    try {
+                        release()
+                    } catch (e: Exception) {
+                        Log.e(TAG, "Error releasing MediaRecorder: ${e.message}")
+                    }
                 }
                 mediaRecorder = null
                 isRecording = false
 
-                val file = File(currentFilePath ?: "")
-                if (file.exists()) {
-                    Log.d(TAG, "✅ Recording STOPPED. File: ${file.name} (${file.length()} bytes)")
+                // ПОДРОБНАЯ ПРОВЕРКА ФАЙЛА
+                val file = getRecordedFile()
+                if (file != null && file.exists()) {
+                    val fileSize = file.length()
+                    Log.d(TAG, "✅ Recording STOPPED successfully")
+                    Log.d(TAG, "✅ File exists: ${file.name}")
+                    Log.d(TAG, "✅ File size: $fileSize bytes")
+                    Log.d(TAG, "✅ Full path: ${file.absolutePath}")
                     true
                 } else {
-                    Log.e(TAG, "❌ File not found: $currentFilePath")
+                    Log.e(TAG, "❌ Recording stopped but FILE NOT FOUND!")
+                    Log.e(TAG, "❌ Expected path: $currentFilePath")
+                    
+                    // ДИАГНОСТИКА: проверяем что вообще есть в папке
+                    val dir = getRecordingsDirectory()
+                    if (dir.exists()) {
+                        val files = dir.listFiles()
+                        Log.e(TAG, "Files in directory: ${files?.size ?: 0}")
+                        files?.forEach { f ->
+                            Log.e(TAG, " - ${f.name} (${f.length()} bytes)")
+                        }
+                    } else {
+                        Log.e(TAG, "❌ Directory doesn't exist: ${dir.absolutePath}")
+                    }
                     false
                 }
             } else {
+                Log.d(TAG, "Not recording or mediaRecorder is null")
                 false
             }
         } catch (e: Exception) {
             Log.e(TAG, "❌ Exception in stopRecording: ${e.message}")
+            e.printStackTrace()
             false
         }
     }
 
-    fun getRecordedFilePath(): String? = currentFilePath
+    fun getRecordedFilePath(): String? {
+        return currentFilePath
+    }
 
-    fun getRecordedFile(): File? = currentFilePath?.let { File(it) }?.takeIf { it.exists() }
+    fun getRecordedFile(): File? {
+        val path = currentFilePath ?: return null
+        val file = File(path)
+        return if (file.exists()) file else null
+    }
 
-    fun isRecording(): Boolean = isRecording
+    fun isRecording(): Boolean {
+        return isRecording
+    }
 
-    fun cleanup() { stopRecording() }
+    fun cleanup() {
+        Log.d(TAG, "Cleaning up")
+        stopRecording()
+    }
 
     fun getRecordingsDirectory(): File {
         return if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.Q) {
+            // Android 10+ - Scoped Storage
             File(context.getExternalFilesDir(Environment.DIRECTORY_MUSIC), "Security_app")
         } else {
+            // Android 9 и ниже - Traditional Storage
             File(Environment.getExternalStorageDirectory(), "Security_app")
         }
     }
@@ -132,9 +174,41 @@ class AudioRecorderHelper(private val context: Context) {
     fun getAllRecordings(): List<File> {
         val dir = getRecordingsDirectory()
         return if (dir.exists() && dir.isDirectory) {
-            dir.listFiles()?.filter { it.isFile && it.name.endsWith(".aac") } ?: emptyList()
+            dir.listFiles()?.filter { 
+                it.isFile && (it.name.endsWith(".aac") || it.name.endsWith(".mp4") || it.name.contains("emergency_")) 
+            } ?: emptyList()
         } else {
             emptyList()
         }
+    }
+
+    // ДИАГНОСТИЧЕСКИЙ МЕТОД
+    fun debugStorage(): String {
+        val dir = getRecordingsDirectory()
+        val info = StringBuilder()
+        info.append("=== AUDIO STORAGE DEBUG ===\n")
+        info.append("Android Version: ${Build.VERSION.SDK_INT}\n")
+        info.append("Directory: ${dir.absolutePath}\n")
+        info.append("Exists: ${dir.exists()}\n")
+        info.append("Is Directory: ${dir.isDirectory}\n")
+        
+        if (dir.exists()) {
+            info.append("Can Read: ${dir.canRead()}\n")
+            if (Build.VERSION.SDK_INT < Build.VERSION_CODES.Q) {
+                info.append("Can Write: ${dir.canWrite()}\n")
+            }
+            val files = dir.listFiles()
+            info.append("File Count: ${files?.size ?: 0}\n")
+            files?.forEach { file ->
+                info.append(" - ${file.name} (${file.length()} bytes, ${Date(file.lastModified())})\n")
+            }
+        } else {
+            info.append("❌ DIRECTORY DOES NOT EXIST!\n")
+        }
+        info.append("Current recording: $isRecording\n")
+        info.append("Current file path: $currentFilePath\n")
+        info.append("=== END DEBUG ===")
+        
+        return info.toString()
     }
 }
