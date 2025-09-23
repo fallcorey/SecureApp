@@ -12,9 +12,6 @@
     <string name="server_settings">Server Settings</string>
     <string name="server_url_hint">Server URL</string>
     <string name="auth_token_hint">Auth Token</string>
-    <string name="mattermost_settings">Mattermost Settings</string>
-    <string name="webhook_hint">Webhook URL</string>
-    <string name="channel_hint">Channel Name</string>
     <string name="sms_settings">SMS Settings</string>
     <string name="sms_number_hint">Emergency SMS Number</string>
     <string name="your_information">Your Information</string>
