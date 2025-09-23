@@ -117,6 +117,12 @@ class SettingsActivity : BaseActivity() {
             return
         }
 
+        // 🔴 ДОБАВЛЕНА ПРОВЕРКА: Должен быть указан хотя бы один способ оповещения
+        if (smsNumberText.isBlank() && serverUrlText.isBlank() && mattermostWebhookText.isBlank()) {
+            showToast("Please set at least one alert method: SMS number, Server URL, or Mattermost Webhook")
+            return
+        }
+
         try {
             // Сохраняем все настройки
             preferenceHelper.saveString("server_url", serverUrlText)
@@ -132,13 +138,21 @@ class SettingsActivity : BaseActivity() {
             val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
             preferenceHelper.saveString("recording_time", selectedRecordingTime)
 
+            // 🔴 ДОБАВЛЕНО: Показываем статус записи аудио
+            val recordingTime = selectedRecordingTime.toLongOrNull() ?: 30000
+            val audioStatusMessage = if (recordingTime == 0L) {
+                "Audio recording DISABLED (0 seconds)"
+            } else {
+                "Audio recording: ${recordingTime / 1000} seconds"
+            }
+
             // Сохраняем язык только при изменении
             if (languageChanged) {
                 changeLanguage(currentLanguage)
-                showToast("Settings saved! Language changed to $currentLanguage")
+                showToast("Settings saved! $audioStatusMessage - Language changed to $currentLanguage")
                 restartApp()
             } else {
-                showToast("Settings saved!")
+                showToast("Settings saved! $audioStatusMessage")
                 finish()
             }
             
