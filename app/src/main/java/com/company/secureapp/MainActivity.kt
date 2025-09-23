@@ -77,7 +77,8 @@ class MainActivity : BaseActivity() {
         statusText = findViewById(R.id.status_text)
         settingsButton = findViewById(R.id.settings_button)
 
-        sosButton.text = "SOS"
+        // Используем строковые ресурсы для текстов
+        sosButton.text = getString(R.string.sos_button)
         settingsButton.text = getString(R.string.settings_button)
 
         sosButton.setOnClickListener {
@@ -100,7 +101,7 @@ class MainActivity : BaseActivity() {
 
     private fun startCountdown() {
         isEmergencyActive = true
-        sosButton.text = "CANCEL"
+        sosButton.text = getString(R.string.cancel_button)
         sosButton.setBackgroundResource(android.R.drawable.btn_default)
         timerText.visibility = View.VISIBLE
         statusText.visibility = View.VISIBLE
@@ -128,14 +129,14 @@ class MainActivity : BaseActivity() {
     }
 
     private fun resetUI() {
-        sosButton.text = "SOS"
+        sosButton.text = getString(R.string.sos_button)
         sosButton.setBackgroundResource(R.drawable.sos_button_background)
         timerText.visibility = View.GONE
         statusText.visibility = View.GONE
     }
 
     private fun startEmergencyProcedure() {
-        statusText.text = "Sending emergency alert..."
+        statusText.text = getString(R.string.sending_alert)
         
         try {
             val savedSmsNumber = preferenceHelper.getString("sms_number", "")
@@ -143,20 +144,18 @@ class MainActivity : BaseActivity() {
             val serverUrl = preferenceHelper.getString("server_url", "")
             val authToken = preferenceHelper.getString("server_auth_token", "")
             
-            // Проверяем что указан хотя бы один способ оповещения
             if (savedSmsNumber.isBlank() && serverUrl.isBlank()) {
-                showToast("Please configure SMS number or server URL in settings")
+                showToast(getString(R.string.configure_alert_method))
                 resetUI()
                 return
             }
 
             if (!checkSmsPermission() && savedSmsNumber.isNotBlank()) {
-                showToast("SMS permission required for emergency alerts")
+                showToast(getString(R.string.sms_permission_required))
                 resetUI()
                 return
             }
 
-            // Получаем время записи и проверяем на 0
             val recordingTimeStr = preferenceHelper.getString("recording_time", "30000")
             val recordingTime = recordingTimeStr.toLongOrNull() ?: 30000
             
@@ -165,7 +164,6 @@ class MainActivity : BaseActivity() {
             val locationInfo = locationHelper.getLocationString()
             val networkInfo = networkHelper.getNetworkInfo()
 
-            // ЗАПИСЬ АУДИО ТОЛЬКО ЕСЛИ ВРЕМЯ > 0
             val isAudioRecording = if (recordingTime > 0 && checkAudioPermission()) {
                 val started = audioRecorder.startRecording()
                 Log.d("MainActivity", "Audio recording started: $started (time: ${recordingTime}ms)")
@@ -195,29 +193,23 @@ class MainActivity : BaseActivity() {
                     
                     runOnUiThread {
                         if (alertResult.success) {
-                            statusText.text = "Emergency alert sent!"
-                            showToast("Alert delivered! ${alertResult.details}")
+                            statusText.text = getString(R.string.alert_sent)
+                            showToast(getString(R.string.alert_delivered) + " ${alertResult.details}")
                         } else {
-                            statusText.text = "Failed to send alert"
-                            showToast("Failed: ${alertResult.details}")
-                        }
-                        
-                        // Логируем детали отправки
-                        alertResult.messages.forEach { message ->
-                            Log.d("MainActivity", "Alert step: $message")
+                            statusText.text = getString(R.string.alert_failed)
+                            showToast(getString(R.string.alert_failed_message) + " ${alertResult.details}")
                         }
                     }
                     
                 } catch (e: Exception) {
                     Log.e("MainActivity", "Alert thread error: ${e.message}")
                     runOnUiThread {
-                        statusText.text = "Error occurred"
-                        showToast("Error: ${e.message}")
+                        statusText.text = getString(R.string.error_occurred)
+                        showToast(getString(R.string.error_message) + " ${e.message}")
                     }
                 }
             }.start()
 
-            // ОСТАНАВЛИВАЕМ ЗАПИСЬ ТОЛЬКО ЕСЛИ ОНА БЫЛА ЗАПУЩЕНА И ВРЕМЯ > 0
             if (isAudioRecording && recordingTime > 0) {
                 handler.postDelayed({
                     Log.d("MainActivity", "Stopping audio recording after $recordingTime ms")
@@ -226,20 +218,12 @@ class MainActivity : BaseActivity() {
                     
                     if (file != null && file.exists()) {
                         Log.d("MainActivity", "✅ Audio file saved: ${file.absolutePath}")
-                        Log.d("MainActivity", "✅ File size: ${file.length()} bytes")
                     } else {
-                        Log.e("MainActivity", "❌ Audio file NOT FOUND!")
-                        // Диагностика
-                        val recordings = audioRecorder.getAllRecordings()
-                        Log.d("MainActivity", "All recordings in directory: ${recordings.size}")
-                        recordings.forEach { recFile ->
-                            Log.d("MainActivity", " - ${recFile.name} (${recFile.length()} bytes)")
-                        }
+                        Log.e("MainActivity", "❌ Audio file not found")
                     }
                 }, recordingTime)
             }
             
-            // Автоматический сброс через 5 секунд
             handler.postDelayed({
                 resetUI()
                 isEmergencyActive = false
@@ -247,9 +231,8 @@ class MainActivity : BaseActivity() {
             
         } catch (e: Exception) {
             Log.e("MainActivity", "Error in emergency procedure: ${e.message}")
-            e.printStackTrace()
-            statusText.text = "Error occurred"
-            showToast("Error: ${e.message}")
+            statusText.text = getString(R.string.error_occurred)
+            showToast(getString(R.string.error_message) + " ${e.message}")
             resetUI()
         }
     }
@@ -272,8 +255,6 @@ class MainActivity : BaseActivity() {
             permissionsToRequest.add(Manifest.permission.ACCESS_COARSE_LOCATION)
         }
         
-        Log.d("MainActivity", "Requesting permissions: $permissionsToRequest")
-        
         if (permissionsToRequest.isNotEmpty()) {
             val requestCode = if (permissionsToRequest.contains(Manifest.permission.SEND_SMS)) {
                 SMS_PERMISSION_CODE
@@ -288,26 +269,19 @@ class MainActivity : BaseActivity() {
     override fun onRequestPermissionsResult(requestCode: Int, permissions: Array<out String>, grantResults: IntArray) {
         super.onRequestPermissionsResult(requestCode, permissions, grantResults)
         
-        Log.d("MainActivity", "Permission result - Code: $requestCode")
-        
         var allGranted = true
         for (i in grantResults.indices) {
             if (grantResults[i] != PackageManager.PERMISSION_GRANTED) {
                 allGranted = false
                 showToast("Permission denied: ${permissions[i]}")
-                Log.d("MainActivity", "Permission denied: ${permissions[i]}")
-            } else {
-                Log.d("MainActivity", "Permission granted: ${permissions[i]}")
             }
         }
         
         if (allGranted) {
-            showToast("All permissions granted!")
+            showToast(getString(R.string.all_permissions_granted))
             if (requestCode == SMS_PERMISSION_CODE) {
                 startCountdown()
             }
-        } else {
-            showToast("Some permissions were denied. App may not work correctly.")
         }
     }
 
