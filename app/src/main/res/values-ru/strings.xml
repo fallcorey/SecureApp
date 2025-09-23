@@ -12,9 +12,6 @@
     <string name="server_settings">Настройки сервера</string>
     <string name="server_url_hint">URL сервера</string>
     <string name="auth_token_hint">Токен авторизации</string>
-    <string name="mattermost_settings">Настройки Mattermost</string>
-    <string name="webhook_hint">URL вебхука</string>
-    <string name="channel_hint">Имя канала</string>
     <string name="sms_settings">SMS настройки</string>
     <string name="sms_number_hint">Экстренный SMS номер</string>
     <string name="your_information">Ваша информация</string>
