@@ -17,7 +17,6 @@ class SettingsActivity : BaseActivity() {
     private lateinit var languageSpinner: Spinner
     private lateinit var recordingTimeSpinner: Spinner
     private var currentLanguage: String = "en"
-    private var languageChanged = false
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -35,27 +34,23 @@ class SettingsActivity : BaseActivity() {
         val userName = findViewById<EditText>(R.id.user_full_name)
         val userPhone = findViewById<EditText>(R.id.user_phone_number)
 
-        // Настраиваем Spinner'ы
         setupLanguageSpinner()
         setupRecordingTimeSpinner()
-
-        // Загружаем сохраненные настройки
         loadSavedSettings(serverUrl, serverAuthToken, smsNumber, userName, userPhone)
 
-        // Обработчик выбора языка
+        // НЕМЕДЛЕННАЯ СМЕНА ЯЗЫКА ПРИ ВЫБОРЕ
         languageSpinner.onItemSelectedListener = object : AdapterView.OnItemSelectedListener {
             override fun onItemSelected(parent: AdapterView<*>?, view: View?, position: Int, id: Long) {
                 val selectedLanguage = when (position) {
                     0 -> "en"
                     1 -> "ru"
-                    2 -> "es"
-                    3 -> "fr"
                     else -> "en"
                 }
                 
                 if (selectedLanguage != currentLanguage) {
-                    languageChanged = true
                     currentLanguage = selectedLanguage
+                    // Меняем язык сразу при выборе
+                    changeLanguageImmediately(selectedLanguage)
                 }
             }
 
@@ -82,8 +77,6 @@ class SettingsActivity : BaseActivity() {
         val languagePosition = when (currentLanguage) {
             "en" -> 0
             "ru" -> 1
-            "es" -> 2
-            "fr" -> 3
             else -> 0
         }
         languageSpinner.setSelection(languagePosition)
@@ -111,26 +104,25 @@ class SettingsActivity : BaseActivity() {
             return
         }
 
-        // Проверяем что указан хотя бы один способ оповещения
         if (smsNumberText.isBlank() && serverUrlText.isBlank()) {
             showToast("Please set at least one alert method: SMS number or Server URL")
             return
         }
 
         try {
-            // Сохраняем все настройки
             preferenceHelper.saveString("server_url", serverUrlText)
             preferenceHelper.saveString("server_auth_token", serverAuthTokenText)
             preferenceHelper.saveString("sms_number", smsNumberText)
             preferenceHelper.saveString("user_name", userNameText)
             preferenceHelper.saveString("user_phone", userPhoneText)
 
-            // Сохраняем время записи
             val recordingTimeValues = resources.getStringArray(R.array.recording_time_values)
             val selectedRecordingTime = recordingTimeValues[recordingTimeSpinner.selectedItemPosition]
             preferenceHelper.saveString("recording_time", selectedRecordingTime)
 
-            // Показываем статус записи аудио
+            // Сохраняем язык
+            sharedPreferences.edit().putString("selected_language", currentLanguage).apply()
+
             val recordingTime = selectedRecordingTime.toLongOrNull() ?: 30000
             val audioStatusMessage = if (recordingTime == 0L) {
                 "Audio recording DISABLED (0 seconds)"
@@ -138,23 +130,29 @@ class SettingsActivity : BaseActivity() {
                 "Audio recording: ${recordingTime / 1000} seconds"
             }
 
-            // Сохраняем язык только при изменении
-            if (languageChanged) {
-                changeLanguage(currentLanguage)
-                showToast("Settings saved! $audioStatusMessage - Language changed to $currentLanguage")
-                restartApp()
-            } else {
-                showToast("Settings saved! $audioStatusMessage")
-                finish()
-            }
+            showToast("Settings saved! $audioStatusMessage")
+            finish()
             
         } catch (e: Exception) {
             showToast("Save error: ${e.message}")
         }
     }
 
-    private fun restartApp() {
-        finish()
+    // НЕМЕДЛЕННАЯ СМЕНА ЯЗЫКА
+    private fun changeLanguageImmediately(languageCode: String) {
+        try {
+            // Сохраняем язык
+            sharedPreferences.edit().putString("selected_language", languageCode).apply()
+            
+            // Применяем язык ко всему приложению
+            (application as? SecureApp)?.setAppLocale(languageCode)
+            
+            // Перезагружаем текущую активити
+            recreate()
+            
+        } catch (e: Exception) {
+            showToast("Error changing language")
+        }
     }
 
     private fun setupLanguageSpinner() {
@@ -175,13 +173,5 @@ class SettingsActivity : BaseActivity() {
         )
         adapter.setDropDownViewResource(android.R.layout.simple_spinner_dropdown_item)
         recordingTimeSpinner.adapter = adapter
-    }
-
-    override fun onBackPressed() {
-        if (languageChanged) {
-            restartApp()
-        } else {
-            super.onBackPressed()
-        }
     }
 }
